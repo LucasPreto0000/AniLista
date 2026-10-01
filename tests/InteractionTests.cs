@@ -106,6 +106,12 @@ class InteractionTests {
      foreach(var card in current.Values)Assert(card.Controls.OfType<Label>().All(l=>l.Right<=card.Width+1),"Texto permanece dentro do cartão em 150%");
      using(var other=new DpiForm())Assert(Theme.S(other,100)==100,"Outra janela mantém escala independente");
      main.ApplyScale(2f);Application.DoEvents();Capture(main,"biblioteca-200.png");
+     foreach(var card in current.Values){
+      Assert(card.Width<=card.Parent.ClientSize.Width,"Cartão cabe na área disponível em 200%");
+      var actions=card.Controls.OfType<FlowLayoutPanel>().Single();Assert(actions.Controls.Cast<Control>().All(c=>c.Right<=actions.ClientSize.Width),"Todos os botões do cartão cabem em 200%");
+     }
+     var addButton=Button(main,"+  Adicionar anime");var heading=Walk(main).OfType<Label>().Single(l=>l.Text=="Assistindo");
+     Assert(!heading.Bounds.IntersectsWith(addButton.Bounds),"Título e botão não se sobrepõem em tela pequena com 200%");
      main.ApplyScale(1f);Application.DoEvents();Assert(Theme.S(first,100)==100,"Escala retorna a 100%");main.Close();
     }
    }finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}

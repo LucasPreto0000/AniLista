@@ -34,6 +34,9 @@ public sealed class AnimeCard:LinePanel {
   var removeButton=Theme.Button(this,"Remover");removeButton.Size=Theme.S(this,90,36);removeButton.Danger=true;removeButton.Click+=delegate{remove(anime);};
   foreach(var b in new[]{action,editButton,removeButton}){b.Under=Theme.Surface;b.Margin=new Padding(0,0,Theme.S(this,8),0);buttons.Controls.Add(b);}
   Controls.Add(buttons);Bind(initial);
+  Resize+=delegate{
+   bool compact=Width<Theme.S(this,400);action.Width=Theme.S(this,compact?134:150);editButton.Width=Theme.S(this,compact?70:78);removeButton.Width=Theme.S(this,compact?82:90);
+  };
  }
  public void Bind(Anime value){
   if(anime!=null&&anime.Title==value.Title&&anime.Status==value.Status&&anime.Episode==value.Episode&&anime.Total==value.Total&&anime.Year==value.Year&&anime.CatalogId==value.CatalogId&&anime.Cover==value.Cover){anime=value;Tag=value;return;}
