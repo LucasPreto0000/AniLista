@@ -2,15 +2,15 @@
 
 Aplicativo Windows para organizar sua biblioteca pessoal de animes, com busca no catálogo da AniList, capas e acompanhamento de episódios.
 
-## Download e compilação
+## Download
 
-O arquivo `AniLista.zip` está disponível em **[Releases](https://github.com/LucasPreto0000/AniLista/releases)**.
+Baixe **AniLista.exe** em **[Releases](https://github.com/LucasPreto0000/AniLista/releases)** e abra com dois cliques no Windows. Requer .NET Framework 4.8.
 
-O ZIP enviado contém o código-fonte e os arquivos de compilação; **não inclui o executável `AniLista.exe`**.
+O aplicativo pode ser usado sem instalação e sem abrir um navegador.
 
-1. Extraia o ZIP no Windows.
-2. Execute `COMPILAR.bat`, usando o compilador do .NET Framework instalado no Windows.
-3. Após a compilação, abra `AniLista.exe` com dois cliques. Não é necessário abrir um navegador.
+## Compilar o código-fonte
+
+Para compilar manualmente, baixe o código-fonte, extraia no Windows e execute `COMPILAR.bat`. O script usa o compilador do .NET Framework instalado no Windows e gera `AniLista.exe`.
 
 ## Como usar
 
