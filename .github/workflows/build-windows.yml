@@ -1,66 +1,79 @@
-name: Compilar AniLista para Windows
+name: Compilar e testar AniLista para Windows
 on:
-  workflow_dispatch:
   push:
     paths:
-      - .github/workflows/build-windows.yml
+      - 'source/**'
+      - 'tests/**'
+      - '.github/workflows/build-windows.yml'
+      - 'COMPILAR.bat'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Versão que será publicada (deve corresponder ao código)
+        required: true
+        default: v1.1.0
 permissions:
-  contents: write
+  contents: read
 jobs:
   build:
     runs-on: windows-latest
     timeout-minutes: 10
-    env:
-      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: Obter os arquivos deste commit
-        shell: pwsh
-        run: |
-          $files = @("source/AniLista.cs", "source/InteractionTests.cs", "source/app.manifest", "AniLista.ico")
-          foreach ($file in $files) {
-            $parent = Split-Path $file -Parent
-            if ($parent) { New-Item -ItemType Directory -Force $parent | Out-Null }
-            $encoded = gh api "repos/$env:GITHUB_REPOSITORY/contents/${file}?ref=$env:GITHUB_SHA" --jq .content
-            if ($LASTEXITCODE -ne 0) { throw "Falha ao obter $file" }
-            [IO.File]::WriteAllBytes((Join-Path $PWD $file), [Convert]::FromBase64String(($encoded -join "")))
-          }
+      - uses: actions/checkout@v4
       - name: Compilar aplicativo e testes
         shell: pwsh
         run: |
           $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:.\source\app.manifest /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll  .\source\AniLista.cs
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar AniLista.exe" }
-          & $csc /nologo /target:exe /out:InteractionTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll  .\source\InteractionTests.cs
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar testes" }
-      - name: Verificar interações e persistência
+          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:.\source\app.manifest /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll .\source\*.cs
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar aplicativo" }
+          & $csc /nologo /target:exe /out:CoreTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll .\tests\CoreTests.cs
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar testes de dados" }
+          & $csc /nologo /target:exe /out:InteractionTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll .\tests\InteractionTests.cs
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar testes de interface" }
+      - name: Verificar armazenamento, catálogo e interface
         shell: pwsh
         run: |
+          & .\CoreTests.exe
+          if ($LASTEXITCODE -ne 0) { throw "Testes de dados falharam" }
           & .\InteractionTests.exe
-          if ($LASTEXITCODE -ne 0) { throw "Testes falharam" }
-          if ((Get-Item AniLista.exe).Length -le 0) { throw "Executável vazio" }
+          if ($LASTEXITCODE -ne 0) { throw "Testes de interface falharam" }
           Get-FileHash AniLista.exe -Algorithm SHA256
-      - name: Publicar somente o executável na release
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AniLista-QA
+          path: qa/*.png
+          if-no-files-found: ignore
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AniLista-Windows
+          path: AniLista.exe
+          retention-days: 14
+  release:
+    if: github.event_name == 'workflow_dispatch'
+    needs: build
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: AniLista-Windows
+      - name: Criar nova release com somente o executável
         shell: pwsh
         run: |
-          gh release upload v1.0.0 AniLista.exe --repo $env:GITHUB_REPOSITORY --clobber
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao enviar executável" }
-          $assets = gh release view v1.0.0 --repo $env:GITHUB_REPOSITORY --json assets --jq '.assets[].name'
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao conferir anexos" }
-          if ($assets -contains "AniLista.zip") {
-            gh release delete-asset v1.0.0 AniLista.zip --repo $env:GITHUB_REPOSITORY --yes
-            if ($LASTEXITCODE -ne 0) { throw "Falha ao remover ZIP" }
-          }
-          $notes = @"
-          Primeira publicação do AniLista para Windows.
-
-          Baixe **AniLista.exe** abaixo e abra com dois cliques.
-
-          - Biblioteca com listas Quero assistir, Assistindo e Concluídos.
-          - Busca no catálogo da AniList, capas e acompanhamento de episódios.
-          - Salvamento automático e cadastro manual offline.
-
-          Requer Windows com .NET Framework 4.8. Consulte o README do repositório para instruções.
-          "@
-          $notes | Set-Content release-notes.md -Encoding utf8
-          gh release edit v1.0.0 --repo $env:GITHUB_REPOSITORY --notes-file release-notes.md
-          if ($LASTEXITCODE -ne 0) { throw "Falha ao atualizar notas" }
+          if ($env:RELEASE_VERSION -notmatch '^v\d+\.\d+\.\d+$') { throw "Versão inválida" }
+          $assembly = [Reflection.AssemblyName]::GetAssemblyName((Join-Path $PWD 'AniLista.exe')).Version
+          $expected = "v$($assembly.Major).$($assembly.Minor).$($assembly.Build)"
+          if ($env:RELEASE_VERSION -ne $expected) { throw "A versão informada não corresponde ao executável: $expected" }
+          $notes = "releases/$env:RELEASE_VERSION.md"
+          if (-not (Test-Path $notes)) { throw "Notas da versão não encontradas" }
+          gh release view $env:RELEASE_VERSION --repo $env:GITHUB_REPOSITORY *> $null
+          if ($LASTEXITCODE -eq 0) { throw "Esta versão já existe. Use uma nova versão; releases anteriores não são substituídas." }
+          gh release create $env:RELEASE_VERSION AniLista.exe --repo $env:GITHUB_REPOSITORY --target $env:GITHUB_SHA --title "AniLista $env:RELEASE_VERSION" --notes-file $notes
+          if ($LASTEXITCODE -ne 0) { throw "Falha ao publicar release" }
