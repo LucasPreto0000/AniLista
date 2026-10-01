@@ -13,7 +13,7 @@ public class DpiForm:Form {
  readonly List<Font> scaledFonts=new List<Font>();
  public float LayoutScale {get;private set;}
  public event EventHandler LayoutScaleChanged;
- public DpiForm(){LayoutScale=1f;AutoScaleMode=AutoScaleMode.None;}
+ public DpiForm(){LayoutScale=1f;AutoScaleMode=AutoScaleMode.None;AppCursors.Apply(this);}
  public static void EnablePerMonitor(){try{SetProcessDpiAwarenessContext(new IntPtr(-4));}catch(EntryPointNotFoundException){}catch(DllNotFoundException){}}
  public static float HandleScale(IntPtr window){try{uint dpi=GetDpiForWindow(window);return dpi>0?dpi/96f:1f;}catch{return 1f;}}
  protected override void OnHandleCreated(EventArgs e){base.OnHandleCreated(e);ApplyScale(HandleScale(Handle));}

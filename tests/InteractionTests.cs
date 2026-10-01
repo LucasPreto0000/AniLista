@@ -28,6 +28,9 @@ class InteractionTests {
     main.ShowInTaskbar=false;main.Opacity=0;main.Show();Application.DoEvents();
     var card=Walk(main).OfType<LinePanel>().First();
     Assert(card.Controls.OfType<Label>().All(l=>l.Right<=card.Width&&l.Left>=0),"Texto cabe dentro do cartão");
+    Assert(main.Cursor.Handle==AppCursors.Arrow.Handle&&main.Cursor.Handle!=Cursors.Default.Handle,"Seta personalizada carregada do executável");
+    Assert(Walk(main).OfType<TextBox>().Single().Cursor.Handle==AppCursors.Text.Handle&&AppCursors.Text.Handle!=Cursors.IBeam.Handle,"Campo usa cursor de texto personalizado");
+    Assert(Button(main,"+  Adicionar anime").Cursor.Handle==AppCursors.Hand.Handle&&AppCursors.Hand.Handle!=Cursors.Hand.Handle,"Botão usa cursor personalizado");
     Button(main,"+1 episódio").PerformClick();Application.DoEvents();
     Assert(store.Load().Single(a=>a.Id==watching.Id).Status=="completed","Último episódio move para concluídos");
     Button(main,"Concluídos").PerformClick();Application.DoEvents();

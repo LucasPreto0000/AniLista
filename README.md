@@ -54,3 +54,5 @@ Para publicar uma versão, atualize `source/VersionInfo.cs`, crie as notas em `r
 
 O aplicativo organiza sua biblioteca; não transmite episódios de anime.
 
+Cursores: Windows 11 Cursors Concept, por [jepriCreations](https://www.deviantart.com/jepricreations), o mesmo pacote usado no YT-DLP Deck. Licença original em `source/assets/cursors/LICENSE-cursors.txt`.
+

@@ -11,7 +11,7 @@ on:
       version:
         description: Versão que será publicada (deve corresponder ao código)
         required: true
-        default: v1.1.0
+        default: v1.1.1
 permissions:
   contents: read
 jobs:
@@ -24,7 +24,7 @@ jobs:
         shell: pwsh
         run: |
           $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:.\source\app.manifest /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll .\source\*.cs
+          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:.\source\app.manifest /resource:source\assets\cursors\arrow.cur,AniLista.Cursors.arrow.cur /resource:source\assets\cursors\hand.cur,AniLista.Cursors.hand.cur /resource:source\assets\cursors\ibeam.cur,AniLista.Cursors.ibeam.cur /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll .\source\*.cs
           if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar aplicativo" }
           & $csc /nologo /target:exe /out:CoreTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll .\tests\CoreTests.cs
           if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar testes de dados" }
