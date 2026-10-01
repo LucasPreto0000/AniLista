@@ -28,9 +28,9 @@ jobs:
         shell: pwsh
         run: |
           $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
-          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:source/app.manifest /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll source/AniLista.cs
+          & $csc /nologo /target:winexe /optimize+ /out:AniLista.exe /win32icon:AniLista.ico /win32manifest:.\source\app.manifest /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll /r:System.Net.Http.dll /r:System.Runtime.Serialization.dll /r:System.Web.Extensions.dll  .\source\AniLista.cs
           if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar AniLista.exe" }
-          & $csc /nologo /target:exe /out:InteractionTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll source/InteractionTests.cs
+          & $csc /nologo /target:exe /out:InteractionTests.exe /r:AniLista.exe /r:System.dll /r:System.Core.dll /r:System.Drawing.dll /r:System.Windows.Forms.dll  .\source\InteractionTests.cs
           if ($LASTEXITCODE -ne 0) { throw "Falha ao compilar testes" }
       - name: Verificar interações e persistência
         shell: pwsh
