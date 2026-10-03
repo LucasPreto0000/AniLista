@@ -16,10 +16,15 @@ public sealed class AnitsuWebViewForm:DpiForm {
  readonly Dictionary<string,TaskCompletionSource<bool>> navigation=new Dictionary<string,TaskCompletionSource<bool>>();
  readonly Dictionary<string,TaskCompletionSource<AnitsuSearchResult>> pending=new Dictionary<string,TaskCompletionSource<AnitsuSearchResult>>();
  Task init;bool closing;readonly CancellationTokenSource lifetime=new CancellationTokenSource();
+ readonly Panel recovery=new Panel{Dock=DockStyle.Fill,BackColor=Theme.Background,Visible=false};
+ readonly Label recoveryText=new Label{AutoSize=false,Dock=DockStyle.Fill,TextAlign=ContentAlignment.MiddleCenter,ForeColor=Theme.Text};
+ int gatewayAttempts;long navigationGeneration;bool retryNavigation;
  public AnitsuWebViewForm(string folder){
   dataFolder=folder;profile=System.IO.Path.Combine(folder,"anitsu-profile");Text="Anitsu Downloader · AniLista";Size=new Size(1180,820);MinimumSize=Theme.S(this,880,620);StartPosition=FormStartPosition.CenterParent;BackColor=Theme.Background;Theme.DarkTitle(this);
   if(Theme.AppIcon!=null)Icon=Theme.AppIcon;ShowIcon=true;
   view.Dock=DockStyle.Fill;Controls.Add(view);FormClosing+=delegate{lifetime.Cancel();CancelSearch();};
+  recoveryText.Font=Theme.Font(this,11);recovery.Controls.Add(recoveryText);
+  var retry=Theme.Button(this,"Tentar novamente");retry.Dock=DockStyle.Bottom;retry.Height=Theme.S(this,44);retry.Click+=delegate{gatewayAttempts=0;recoveryText.Text="Reconectando ao Anitsu…";if(view.CoreWebView2!=null)view.CoreWebView2.Reload();};recovery.Controls.Add(retry);Controls.Add(recovery);
  }
  public Task Initialize(){if(init==null)init=InitializeCore();return init;}
  async Task InitializeCore(){
@@ -27,7 +32,8 @@ public sealed class AnitsuWebViewForm:DpiForm {
   view.CoreWebView2.Settings.AreDevToolsEnabled=false;view.CoreWebView2.Settings.IsWebMessageEnabled=true;view.ZoomFactor=0.9;
   await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(EmbeddedAnitsuAssets.Bootstrap);
   downloader=new AnitsuDownloaderBridge(view.CoreWebView2,dataFolder,delegate{});
-  view.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){if(!AnitsuDownloadPolicy.IsNavigation(e.Uri))e.Cancel=true;else pageReady=false;};
+  view.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){if(!AnitsuDownloadPolicy.IsNavigation(e.Uri))e.Cancel=true;else{pageReady=false;navigationGeneration++;if(!retryNavigation)gatewayAttempts=0;retryNavigation=false;}};
+  view.CoreWebView2.NavigationCompleted+=GatewayCompleted;
   view.CoreWebView2.NewWindowRequested+=delegate(object sender,CoreWebView2NewWindowRequestedEventArgs e){e.Handled=true;if(AnitsuDownloadPolicy.IsDownload(e.Uri)){var json=new JavaScriptSerializer();var ignored=view.CoreWebView2.ExecuteScriptAsync("var f=document.createElement('iframe');f.hidden=true;f.src="+json.Serialize(e.Uri)+";document.body.appendChild(f);");}else if(AnitsuDownloadPolicy.IsNavigation(e.Uri))view.CoreWebView2.Navigate(e.Uri);};
   view.CoreWebView2.WebMessageReceived+=delegate(object sender,CoreWebView2WebMessageReceivedEventArgs e){
    if(!AnitsuApi.IsSite(e.Source))return;
@@ -36,6 +42,14 @@ public sealed class AnitsuWebViewForm:DpiForm {
     int code=Convert.ToInt32(row["status"]);request.TrySetResult(AnitsuApi.FromHttp(code,AnitsuApi.StringValue(row,"body")));
    }catch(Exception){}
   };
+ }
+ async void GatewayCompleted(object sender,CoreWebView2NavigationCompletedEventArgs e){
+  if(closing||IsDisposed)return;
+  if(e.HttpStatusCode!=502&&e.HttpStatusCode!=503&&e.HttpStatusCode!=504){recovery.Hide();gatewayAttempts=0;return;}
+  recoveryText.Text=gatewayAttempts<2?"O Anitsu está demorando para responder. Reconectando…":"O Anitsu está indisponível no momento. Tente novamente em instantes.";recovery.Show();recovery.BringToFront();
+  if(gatewayAttempts>=2)return;
+  long generation=navigationGeneration;int delay=700*(++gatewayAttempts);
+  try{await Task.Delay(delay,lifetime.Token);if(closing||IsDisposed||generation!=navigationGeneration)return;retryNavigation=true;view.CoreWebView2.Reload();}catch(OperationCanceledException){}
  }
  public void ShowStatus(string text){if(!IsDisposed&&!closing&&Visible)Notice.Tell(TopLevelControl??this,"Anitsu",text);}
  public CoreWebView2 Core{get{return view.CoreWebView2;}}
@@ -73,6 +87,6 @@ public sealed class AnitsuWebViewForm:DpiForm {
  public async Task Connect(IWin32Window owner){Show(owner);Activate();CancelSearch();await Initialize();if(!IsDisposed)view.CoreWebView2.Navigate("https://anitsu.moe/");}
  public async Task Disconnect(){CancelSearch();await Initialize();await view.CoreWebView2.Profile.ClearBrowsingDataAsync(CoreWebView2BrowsingDataKinds.AllProfile);}
  public void CloseSession(){Close();Dispose();}
- protected override void Dispose(bool disposing){if(disposing&&!closing){closing=true;lifetime.Cancel();CancelSearch();foreach(var item in pending.Values.ToArray())item.TrySetCanceled();pending.Clear();foreach(var item in navigation.Values.ToArray())item.TrySetCanceled();navigation.Clear();if(downloader!=null)downloader.Dispose();}base.Dispose(disposing);}
+ protected override void Dispose(bool disposing){if(disposing&&!closing){closing=true;lifetime.Cancel();CancelSearch();if(view.CoreWebView2!=null)view.CoreWebView2.NavigationCompleted-=GatewayCompleted;foreach(var item in pending.Values.ToArray())item.TrySetCanceled();pending.Clear();foreach(var item in navigation.Values.ToArray())item.TrySetCanceled();navigation.Clear();if(downloader!=null)downloader.Dispose();}base.Dispose(disposing);}
 }
 }

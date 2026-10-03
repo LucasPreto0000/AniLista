@@ -21,24 +21,25 @@ class AnitsuEmbeddedSmoke {
   using(var form=new AnitsuWebViewForm(folder))using(var timeout=new CancellationTokenSource(60000)){
    typeof(MainForm).GetMethod("ShowAnitsu",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(owner,new object[]{form});Assert(!form.TopLevel&&form.TopLevelControl==owner,"Browser hosted in main window");await form.Initialize();Assert(Math.Abs(form.BrowserZoomFactor-0.9)<0.001,"Anitsu site starts at 90% zoom");var core=form.Core;
    core.AddWebResourceRequestedFilter("https://nuvem.anitsu.moe/*",CoreWebView2WebResourceContext.All);
-   int pages=0;
+   int pages=0;bool unavailable=false;
    core.WebResourceRequested+=delegate(object sender,CoreWebView2WebResourceRequestedEventArgs e){
     var uri=new Uri(e.Request.Uri);string body="{\"files\":[]}",headers="Content-Type: application/json",reason="OK";int code=200;
     if(uri.AbsolutePath=="/"){pages++;headers="Content-Type: text/html; charset=utf-8";body="<!doctype html><html><head></head><body><nav><button>Home</button></nav><input placeholder='Buscar pastas...'><button onclick=\"document.querySelector('nav').innerHTML='<button>Home</button><div>Anime</div><div>Lain</div>'\"><span>Anime/Lain</span></button></body></html>";}
+    if(uri.AbsolutePath=="/"&&(pages==1||unavailable)){code=502;reason="Bad Gateway";body="<html><body>502 Bad Gateway nginx</body></html>";}
     else if(uri.AbsolutePath=="/api/search")body="{\"results\":[{\"name\":\"Lain\",\"path\":\"Anime/Lain\",\"kind\":\"directory\"}]}";
     else if(uri.AbsolutePath=="/api/download"){if(uri.Query.Contains("expired")){code=401;reason="Unauthorized";body="login";}else{body="test-download-bytes";headers="Content-Type: application/octet-stream\r\nContent-Disposition: attachment; filename=Lain.mkv";}}
     e.Response=core.Environment.CreateWebResourceResponse(new MemoryStream(Encoding.UTF8.GetBytes(body)),code,reason,headers);
    };
-   await form.ShowCloud(timeout.Token);
+   await form.ShowCloud(timeout.Token);Assert(pages==2,"Initial HTTP 502 recovered automatically");
    for(int n=0;n<30;n++){if(await core.ExecuteScriptAsync("!!document.getElementById('anu-panel')")=="true")break;await Task.Delay(100,timeout.Token);}
    Assert(await core.ExecuteScriptAsync("!!document.getElementById('anu-panel')")=="true","Exact bundled userscript panel mounted");
    Assert(await core.ExecuteScriptAsync("document.getElementById('anu-idm-label').hidden")=="true","Unsupported browser extension mode hidden");
    Assert(await core.ExecuteScriptAsync("getComputedStyle(document.getElementById('anu-idm-label')).display === 'none'")=="true","Unsupported mode visually hidden");
    await form.FindAnime("Lain",timeout.Token);
    Assert(await core.ExecuteScriptAsync("document.querySelector('input[placeholder^=Buscar]').value === 'Lain'")=="true","Anime name filled automatically");
-   await form.FindAnime("Lain",timeout.Token);Assert(pages==1,"Repeated searches reuse loaded Cloud without reload");
+   await form.FindAnime("Lain",timeout.Token);Assert(pages==2,"Repeated searches reuse loaded Cloud without reload");
    await core.ExecuteScriptAsync("document.querySelector('input[placeholder^=Buscar]').remove();setTimeout(()=>{const input=document.createElement('input');input.placeholder='Buscar pastas...';document.body.appendChild(input);},150);");
-   await form.FindAnime("Lain",timeout.Token);Assert(await core.ExecuteScriptAsync("document.querySelector('input[placeholder^=Buscar]').value === 'Lain'")=="true","Queued title survives temporary search input removal");Assert(pages==1,"Folder transition does not force full reload");
+   await form.FindAnime("Lain",timeout.Token);Assert(await core.ExecuteScriptAsync("document.querySelector('input[placeholder^=Buscar]').value === 'Lain'")=="true","Queued title survives temporary search input removal");Assert(pages==2,"Folder transition does not force full reload");
    Assert(await core.ExecuteScriptAsync("document.querySelector('nav').textContent.includes('Anime')")=="true","Found folder opened and breadcrumb confirmed");
    var complete=new TaskCompletionSource<string>();
    core.WebMessageReceived+=delegate(object sender,CoreWebView2WebMessageReceivedEventArgs e){if(e.WebMessageAsJson.Contains("smokeResult"))complete.TrySetResult(e.WebMessageAsJson);};
@@ -48,6 +49,10 @@ class AnitsuEmbeddedSmoke {
    complete=new TaskCompletionSource<string>();
    await core.ExecuteScriptAsync("GM_download({url:'https://nuvem.anitsu.moe/api/download?path=expired',name:'expired.mkv',onload:()=>chrome.webview.postMessage({smokeResult:'unexpected'}),onerror:e=>chrome.webview.postMessage({smokeResult:'expired',code:e.error})});");
    result=await AnitsuAsync.Wait(complete.Task,timeout.Token);Assert(result.Contains("expired")&&result.Contains("401"),"HTTP auth status forwarded: "+result);Assert(!File.Exists(Path.Combine(destination,"expired.mkv")),"Failed response not saved");
+   int before=pages;unavailable=true;core.Navigate(AnitsuApi.Cloud);
+   for(int n=0;n<60&&pages<before+3;n++)await Task.Delay(100,timeout.Token);
+   await Task.Delay(1800,timeout.Token);Assert(pages==before+3,"Persistent HTTP 502 stops after two retries");
+   unavailable=false;core.Reload();await form.ShowCloud(timeout.Token);Assert(pages==before+4,"Manual reload starts a fresh recovery cycle");
    form.CloseSession();
   }
  }
