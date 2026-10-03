@@ -16,6 +16,7 @@ class InteractionTests {
  static void Assert(bool success,string name) { if(!success)throw new Exception(name); }
  static Button Button(Form form,string title) {return Walk(form).OfType<Button>().First(b=>b.Text==title||b.Text.StartsWith(title+"   "));}
  [STAThread] static int Main(){
+  WebViewDependencies.Register();
   DpiForm.EnablePerMonitor();
   Application.EnableVisualStyles();Application.SetCompatibleTextRenderingDefault(false);
   string folder=Path.Combine(Path.GetTempPath(),"AniLista-interactions-"+Guid.NewGuid().ToString("N"));
@@ -61,36 +62,34 @@ class InteractionTests {
   finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}
  }
  static void AnitsuDialogs(string folder){
-  using(var web=new AnitsuWebViewProvider(folder))using(var bridge=new AnitsuBridgeServer())
-  using(var settings=new AnitsuSettingsForm(AnitsuMode.Disabled,folder,web,bridge,m=>{})){
-   settings.ShowInTaskbar=false;settings.Opacity=0;settings.Show();Application.DoEvents();Assert(Walk(settings).OfType<ComboBox>().Single().Items.Count==3,"Configurações oferecem ambos os modos e desativado");Capture(settings,"anitsu-config-100.png");settings.ApplyScale(1.5f);Application.DoEvents();Capture(settings,"anitsu-config-150.png");settings.ApplyScale(2f);Application.DoEvents();Capture(settings,"anitsu-config-200.png");settings.Close();
+  using(var window=new AnitsuWebViewForm(folder)){
+   window.ShowInTaskbar=false;window.Opacity=0;window.Show();Application.DoEvents();Assert(!Walk(window).OfType<ComboBox>().Any(),"Janela integrada não oferece modos");Assert(Button(window,"Pasta dos downloads")!=null,"Downloader está na janela integrada");Capture(window,"anitsu-integrado-100.png");window.ApplyScale(1.5f);Application.DoEvents();Capture(window,"anitsu-integrado-150.png");window.Close();
   }
   using(var results=new AnitsuResultsForm(new List<AnitsuCandidate>{new AnitsuCandidate{Name="Lain",Path="Anime/Lain"},new AnitsuCandidate{Name="Lain",Path="BD/Lain"}})){
    results.ShowInTaskbar=false;results.Opacity=0;results.Show();Application.DoEvents();var list=Walk(results).OfType<ListBox>().Single();Assert(!Button(results,"Abrir no Anitsu").Enabled,"Resultado ambíguo exige seleção");list.SelectedIndex=1;Assert(Button(results,"Abrir no Anitsu").Enabled,"Selecionar pasta habilita abertura");Capture(results,"anitsu-results-100.png");Button(results,"Abrir no Anitsu").PerformClick();Assert(results.Selected.Path=="BD/Lain","Seleção preserva caminho escolhido");
   }
  }
- sealed class AnitsuProvider:IAnitsuSearchProvider {
-  public int Requests;public bool Found;
-  public Task<AnitsuSearchResult> SearchAsync(string title,CancellationToken token){Requests++;return Task.FromResult(Found?new AnitsuSearchResult{State=AnitsuSearchState.Found,Candidates=new List<AnitsuCandidate>{new AnitsuCandidate{Name=title,Path="Anime/Teste"}}}:AnitsuSearchResult.Error(AnitsuSearchState.NotFound,""));}
-  public Task OpenAsync(AnitsuCandidate candidate,CancellationToken token){return Task.FromResult(0);}
-  public void Dispose(){}
+ sealed class AnitsuProvider:IAnitsuWorkspace {
+  public int Requests,Opened;public string Title;public bool Disposed;
+  public Task SearchAsync(Anime anime,IWin32Window owner){Requests++;Title=anime.Title;return Task.FromResult(0);}
+  public Task ShowAsync(IWin32Window owner){Opened++;return Task.FromResult(0);}
+  public void Dispose(){Disposed=true;}
  }
  static void AnitsuSaveBoundary(){
   string folder=Path.Combine(Path.GetTempPath(),"AniLista-save-boundary-"+Guid.NewGuid().ToString("N"));
   try{var store=new LibraryStore(folder);var data=store.Load();var provider=new AnitsuProvider();
-   using(var coordinator=new AnitsuSearchCoordinator(()=>AnitsuMode.AppLogin,m=>provider,a=>a(),s=>{},items=>Task.FromResult<AnitsuCandidate>(null)))
-   using(var main=new MainForm(store,data,null,coordinator))
+   using(var main=new MainForm(store,data,null,provider))
    using(var dismiss=new System.Windows.Forms.Timer{Interval=20}){
     dismiss.Tick+=delegate{foreach(var notice in Application.OpenForms.OfType<Notice>().ToArray()){notice.DialogResult=DialogResult.OK;notice.Close();}};dismiss.Start();main.ShowInTaskbar=false;main.Opacity=0;main.Show();Application.DoEvents();
-    var save=typeof(MainForm).GetMethod("SaveEntry",BindingFlags.NonPublic|BindingFlags.Instance);var anime=new Anime{Title="Boundary Lain"};
-    Assert((bool)save.Invoke(main,new object[]{anime,true})&&provider.Requests==1,"Inclusão salva dispara busca uma vez");
-    anime.Episode=1;Assert((bool)save.Invoke(main,new object[]{anime,false})&&provider.Requests==1,"Edição não dispara busca");
-    Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title=anime.Title},true})&&provider.Requests==1,"Duplicata não dispara busca");
-    typeof(MainForm).GetMethod("SetAnitsuMode",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(main,new object[]{AnitsuMode.AppLogin});provider.Found=true;
-    dismiss.Tick+=delegate{foreach(var chooser in Application.OpenForms.OfType<AnitsuSavedForm>().ToArray()){Walk(chooser).OfType<ListBox>().Single().SelectedIndex=0;Button(chooser,"Buscar no Anitsu").PerformClick();}};
-    Button(main,"Buscar anime salvo").PerformClick();Assert(provider.Requests==2&&Button(main,"Copiar caminho").Enabled,"Busca manual reutiliza anime salvo e permite copiar resultado exato");
+    var save=typeof(MainForm).GetMethod("SaveEntry",BindingFlags.NonPublic|BindingFlags.Instance);var anime=new Anime{Title="Boundary Lain",Status="watching"};
+    Assert((bool)save.Invoke(main,new object[]{anime,true})&&provider.Requests==0,"Inclusão salva sem pesquisa automática");
+    anime.Episode=1;anime.Title="Título atualizado";Assert((bool)save.Invoke(main,new object[]{anime,false})&&provider.Requests==0,"Edição não dispara busca");
+    Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title=anime.Title},true})&&provider.Requests==0,"Duplicata não dispara busca");
+    byte[] before=File.ReadAllBytes(store.FilePath),backup=File.ReadAllBytes(store.BackupPath(0));
+    var more=Button(main,"⋯");Assert(more.Right<=more.Parent.Width&&more.Top>=0,"Três pontinhos cabem no cartão");more.ContextMenuStrip.Items[0].PerformClick();Assert(provider.Requests==1&&provider.Title==anime.Title,"Menu pesquisa o título atual do cartão");more.ContextMenuStrip.Items[1].PerformClick();Assert(provider.Opened==1,"Menu abre downloader integrado");
+    Assert(before.SequenceEqual(File.ReadAllBytes(store.FilePath))&&backup.SequenceEqual(File.ReadAllBytes(store.BackupPath(0))),"Menu não altera biblioteca nem backup");
     var external=new LibraryStore(folder);var externalData=external.Load();externalData.Add(new Anime{Title="Alteração externa"});external.Save(externalData);
-    Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title="Não salvo"},true})&&provider.Requests==2,"Falha no salvamento não dispara busca");main.Close();
+    Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title="Não salvo"},true})&&provider.Requests==1,"Falha no salvamento não dispara busca");main.Close();Assert(provider.Disposed,"Fechar app encerra integração");
    }
   }finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}
  }

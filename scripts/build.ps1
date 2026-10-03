@@ -22,7 +22,7 @@ if (-not (Test-Path -LiteralPath $compilerPath)) {
 $references = @(
   'System.dll', 'System.Core.dll', 'System.Drawing.dll',
   'System.Windows.Forms.dll', 'System.Net.Http.dll',
-  'System.Runtime.Serialization.dll', 'System.Web.Extensions.dll'
+  'System.Runtime.Serialization.dll', 'System.Web.Extensions.dll', 'System.Web.dll'
 ) | ForEach-Object { '/r:' + $_ }
 $compilerSignature = (Get-FileHash -LiteralPath $compilerPath -Algorithm SHA256).Hash
 New-Item -ItemType Directory -Path $outputFolderPath -Force | Out-Null
@@ -86,10 +86,12 @@ try {
   $cursors = @(Get-ChildItem -LiteralPath (Join-Path $projectRootPath 'source\assets\cursors') -File | Where-Object { $_.Extension -in @('.cur', '.ani') })
   $resources = @($cursors | ForEach-Object { '/resource:' + $_.FullName + ',AniLista.Cursors.' + $_.Name })
   $resources += @($webViewFiles | ForEach-Object { '/resource:' + $_.FullName + ',AniLista.WebView2.' + $_.FullName.Substring($webViewFolder.Length + 1).Replace('\', '.') })
-  $appPath = Build-Target -Name 'AniLista' -Sources $sources -Inputs (@($iconPath, $manifestPath, (Join-Path $PSScriptRoot 'restore-webview2.ps1')) + @($cursors.FullName) + @($webViewFiles.FullName)) -Options (@('/target:winexe', "/win32icon:$iconPath", "/win32manifest:$manifestPath") + $resources)
+  $anitsuAssets = @(Get-ChildItem -LiteralPath (Join-Path $projectRootPath 'source\assets\anitsu') -Filter '*.js' -File)
+  $resources += @($anitsuAssets | ForEach-Object { '/resource:' + $_.FullName + ',AniLista.Anitsu.' + $_.Name })
+  $appPath = Build-Target -Name 'AniLista' -Sources $sources -Inputs (@($iconPath, $manifestPath, (Join-Path $PSScriptRoot 'restore-webview2.ps1')) + @($cursors.FullName) + @($webViewFiles.FullName) + @($anitsuAssets.FullName)) -Options (@('/target:winexe', "/win32icon:$iconPath", "/win32manifest:$manifestPath") + $resources)
   Copy-Item -LiteralPath (Join-Path $projectRootPath 'AniLista.exe.config') -Destination ($appPath + '.config') -Force
 
-  if ($Test -in @('core', 'all')) { Run-Tests -Name 'CoreTests'; Run-Tests -Name 'AnitsuTests' }
+  if ($Test -in @('core', 'all')) { Run-Tests -Name 'CoreTests'; Run-Tests -Name 'AnitsuTests'; Run-Tests -Name 'AnitsuEmbeddedTests' }
   if ($Test -in @('ui', 'all')) { Run-Tests -Name 'InteractionTests' }
 
   if ($Install) {

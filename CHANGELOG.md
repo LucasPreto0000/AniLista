@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.3](releases/v1.1.3.md)
+
+Pesquisa manual no menu de três pontinhos de cada anime e Anitsu Downloader 1.6.8 incorporado ao executável, com sessão própria, seleção de destino e downloads sem sobrescrever arquivos existentes. Substitui os dois modos e a busca automática da versão anterior.
+
 ## [1.1.2](releases/v1.1.2.md)
 
 Busca automática opcional no Anitsu após salvar, login próprio ou extensão Chrome/Edge, seleção de pastas e cancelamento de consultas. Preserva a biblioteca e o backup único.

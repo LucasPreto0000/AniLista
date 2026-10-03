@@ -58,13 +58,13 @@ Os testes estão em `tests`. O workflow Windows compila e executa testes de recu
 
 Para publicar uma versão, atualize `source/VersionInfo.cs`, crie as notas em `releases/vX.Y.Z.md`, atualize [CHANGELOG.md](CHANGELOG.md) e execute **Compilar e testar AniLista para Windows** em Actions, informando `vX.Y.Z`. A publicação exige testes aprovados, confere a versão do executável e recusa substituir uma release existente. Somente `AniLista.exe` é anexado; o GitHub fornece seus próprios arquivos de código-fonte.
 
-O aplicativo organiza sua biblioteca; não transmite episódios de anime.
+O aplicativo organiza sua biblioteca e permite abrir o Anitsu Downloader integrado.
 
 ## Integração Anitsu
 
-O botão **Anitsu** permite buscar automaticamente depois de salvar um anime. Escolha login dentro do app ou a extensão Chrome/Edge, que usa sua sessão do navegador e abre a pasta encontrada. Resultados ambíguos exigem escolher um caminho; uma falha na busca não afeta a biblioteca.
+Use **⋯ → Pesquisar no Anitsu**, no cartão do anime. A busca abre uma janela do Cloud com **Anitsu Downloader 1.6.8 incorporado ao EXE**. Entre na sua conta nessa janela e selecione os arquivos para baixar. Resultados ambíguos pedem escolher uma pasta; falhas na busca não afetam a biblioteca. O menu também permite abrir o Downloader sem pesquisar.
 
-Consulte [como configurar](docs/ANITSU.md) e [como instalar a extensão](extensions/anitsu/README.md). O login dentro do app requer o WebView2 Runtime da Microsoft. A abertura autenticada deve ser conferida com sua própria sessão.
+Consulte [como usar](docs/ANITSU.md). Requer o WebView2 Runtime da Microsoft. Não exige extensão nem pasta de scripts ao lado do aplicativo. Downloads diretos vão para Downloads ou para o destino escolhido em **Pasta dos downloads**.
 
 Cursores: Windows 11 Cursors Concept, por [jepriCreations](https://www.deviantart.com/jepricreations), o mesmo pacote usado no YT-DLP Deck. Licença original em `source/assets/cursors/LICENSE-cursors.txt`.
 

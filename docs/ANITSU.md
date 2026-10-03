@@ -1,32 +1,31 @@
-# Buscar animes no Anitsu
+# Anitsu Downloader dentro do AniLista
 
-Abra **Anitsu** na barra lateral do AniLista. Escolha um modo e clique **Salvar modo**. A integração começa desativada.
+1. No cartão do anime, clique em **⋯ → Pesquisar no Anitsu**.
+2. Na primeira vez, use **Entrar no Anitsu** e faça login no site verdadeiro. Esta sessão é própria do aplicativo; o login do Chrome/Edge não é transferido.
+3. Clique em **Pesquisar** após entrar. Uma correspondência exata e única abre a pasta; resultados ambíguos pedem escolher um caminho.
+4. Selecione os arquivos no painel flutuante do **Anitsu Downloader 1.6.8** e inicie o download. **⋯ → Abrir Anitsu Downloader** também abre o Cloud sem pesquisar.
+5. **Pasta dos downloads** muda o destino dos downloads diretos. O padrão é Downloads do usuário. Arquivos existentes são preservados, com sufixo numérico nos novos arquivos de mesmo nome.
 
-## Login dentro do AniLista
+Adicionar, editar ou importar animes não dispara pesquisas. Falhas no Anitsu não alteram a biblioteca. Se a interface do site mudar e impedir abrir a pasta, **Copiar caminho** continua disponível. Fechar a janela encerra downloads diretos em andamento; fechar o AniLista também fecha sua janela Anitsu.
 
-Escolha **Login dentro do AniLista**, clique **Conectar / reparar** e faça login no site verdadeiro. Use **Abrir Anitsu Cloud** para verificar a sessão, depois **Concluir login**.
+## Downloader incorporado
 
-Ao adicionar um anime, a busca usa essa sessão. Se encontrar uma pasta exata e única, abre o Cloud no navegador padrão e mostra o caminho na barra lateral. Este modo abre a página do Cloud; para abrir diretamente dentro da pasta, utilize a extensão.
+O executável contém o arquivo `Anitsu-Downloader.user.js` da [release 1.6.8](https://github.com/LucasPreto0000/Anitsu-Downloader/releases/tag/v1.6.8), sem alterar seus bytes. SHA256: `b160100e1149777274a3ca5eceb824876a8de98f545b32b17dcf431eb374b4d6`. Autores: TheCyBee & Saitama; licença MIT declarada no userscript.
 
-**Buscar anime salvo** permite tentar novamente depois de fazer login ou recuperar a conexão, sem duplicar o anime. **Copiar caminho** fica disponível assim que uma pasta é escolhida, mesmo se o navegador não conseguir abri-la.
+Um adaptador fornece as APIs GM dentro do WebView2. Não é necessário instalar Tampermonkey, carregar uma extensão nem manter uma pasta de scripts junto do EXE. Downloads diretos usam a sessão do próprio Cloud; respostas 401/403 são repassadas ao script para renovação da sessão. O modo AB Download Manager exige que esse programa externo esteja instalado e configurado. IDM fica oculto porque sua extensão de navegador não funciona no WebView2.
 
-O WebView2 Runtime precisa estar instalado no Windows. O projeto incorpora o SDK ao executável; ele não precisa estar ao lado do código. Se o Runtime estiver ausente, instale-o pelo [site oficial da Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/).
+O Windows precisa do [WebView2 Runtime da Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). O SDK e os loaders estão incorporados ao EXE; somente o Runtime é externo.
 
-## Usar o login existente no Chrome / Edge
+## Armazenamento
 
-Siga as [instruções da extensão](../extensions/anitsu/README.md). A extensão abre a pasta encontrada usando a interface do site. Mantenha o AniLista aberto e conectado. Nenhum dado de autenticação é enviado ao app.
-
-## Regras e armazenamento
-
-- Apenas novas inclusões salvas disparam a pesquisa. Editar, importar, alterar episódio ou tentar uma duplicata não dispara busca.
-- Nomes parecidos ou caminhos diferentes exigem escolher uma pasta. Os números das temporadas são preservados na comparação.
-- Trocar de modo ou fechar o app cancela consultas pendentes. Consultas não desfazem salvamentos.
-- Preferência: `%LOCALAPPDATA%\AniLista\anitsu-settings.json`.
 - Sessão própria: `%LOCALAPPDATA%\AniLista\anitsu-profile`.
-- Dependências: `%LOCALAPPDATA%\AniLista\runtime\webview2-1.0.4258.31`.
+- Destino escolhido: `%LOCALAPPDATA%\AniLista\anitsu-download-folder.txt`.
+- Dependências extraídas automaticamente: `%LOCALAPPDATA%\AniLista\runtime\webview2-1.0.4258.31`.
 - Biblioteca e seu único `.bak` continuam na localização anterior e não guardam a sessão.
-- O executável pode mudar de pasta. No modo extensão, use **Conectar / reparar** depois de movê-lo, porque o navegador precisa do caminho atual do Native Host.
+- **Sair da conta** limpa os dados do perfil Anitsu. Mover o executável preserva a sessão e a biblioteca.
+
+A extensão em `extensions/anitsu` pertence à versão 1.1.2 e não é usada pela interface atual.
 
 ## Verificação
 
-`scripts/build.ps1 -Test all` verifica armazenamento, correspondências, cancelamento, framing, IPC e interface, usando bibliotecas temporárias. `node extensions/anitsu/tests.js` verifica a extensão com a API do navegador simulada. O teste manual autenticado consiste em conectar, adicionar um anime conhecido e conferir o caminho aberto. Login no app e login do navegador são sessões distintas.
+`scripts/build.ps1 -Test all` verifica dados e interface com bibliotecas temporárias. `node tests/anitsu-embedded.js` verifica o adaptador GM e a confirmação da navegação. `scripts/test-anitsu-embedded.ps1` usa o Runtime real com respostas HTTPS simuladas e perfil temporário para verificar montagem do painel, busca, arquivo baixado, preservação de arquivos existentes e erro 401. Esse teste não autentica a conta real do usuário; login e downloads reais dependem de uma sessão válida e do serviço Anitsu.

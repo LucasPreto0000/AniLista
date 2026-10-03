@@ -18,7 +18,7 @@
 | Cursores incorporados | `source/AppCursors.cs`, `source/assets/cursors` |
 | Inicialização e instância única | `source/Program.cs` |
 | Versão do executável | `source/VersionInfo.cs` |
-| Integração Anitsu, sessão e IPC | `source/Anitsu/`, `extensions/anitsu/`, [configuração](ANITSU.md) |
+| Anitsu integrado, sessão e downloads | `source/Anitsu/`, `source/assets/anitsu/`, [uso](ANITSU.md) |
 
 ## Comandos
 
@@ -42,7 +42,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Test all 
 
 O compilador é o `csc.exe` do .NET Framework instalado no Windows. Dependências, recursos e opções de compilação ficam em `scripts/build.ps1`, usado também pelo BAT e pelo GitHub Actions.
 
-O build restaura WebView2 1.0.4258.31 do feed oficial NuGet e verifica o SHA512 fixado em `scripts/restore-webview2.ps1`. O hash foi calculado do pacote baixado por HTTPS; não é uma assinatura independente do editor. As duas assemblies e loaders x86/x64 são incorporados ao EXE. A primeira restauração requer internet. Testes da extensão: `node extensions/anitsu/tests.js`. O teste `AnitsuWebViewSmoke.cs` é manual e usa um perfil temporário para conferir o HTTP de autenticação real, sem acessar a biblioteca do usuário.
+O build restaura WebView2 1.0.4258.31 do feed oficial NuGet e verifica o SHA512 fixado em `scripts/restore-webview2.ps1`. O hash foi calculado do pacote baixado por HTTPS; não é uma assinatura independente do editor. As duas assemblies e loaders x86/x64 são incorporados ao EXE. A primeira restauração requer internet. Teste do adaptador incorporado: `node tests/anitsu-embedded.js`. `scripts/test-anitsu-embedded.ps1` verifica o painel e os downloads em WebView2 real com servidor simulado e perfil temporário. Exige o Runtime instalado; não usa a biblioteca nem a conta real do usuário. `AnitsuWebViewSmoke.cs` é o diagnóstico legado da sessão não autenticada; `extensions/anitsu` conserva o código da versão 1.1.2.
 
 ## Verificação visual
 

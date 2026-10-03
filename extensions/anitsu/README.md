@@ -1,5 +1,7 @@
 # AniLista · Anitsu
 
+**Legado da versão 1.1.2.** A interface atual usa o Downloader integrado pelo menu ⋯ dos cartões; esta extensão não é necessária nem recebe buscas do app atual. As instruções abaixo documentam a versão anterior. Consulte [o fluxo atual](../../docs/ANITSU.md).
+
 Esta extensão pesquisa usando sua sessão do Anitsu no Chrome ou Edge. Cookies e credenciais permanecem no navegador.
 
 ## Instalação

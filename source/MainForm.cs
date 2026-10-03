@@ -19,30 +19,26 @@ namespace AniLista {
 public sealed class MainForm:DpiForm {
  static readonly string[] StatusKeys={"watching","planned","completed"};
  readonly CoverService covers;
- readonly AnitsuSettingsStore anitsuSettings;readonly AnitsuWebViewProvider anitsuWeb;readonly AnitsuBridgeServer anitsuBridge;readonly AnitsuSearchCoordinator anitsu;AnitsuMode anitsuMode;Label anitsuFeedback;RoundButton anitsuButton,anitsuRetry,anitsuCopy;
+ readonly IAnitsuWorkspace anitsuWorkspace;
  readonly LibraryStore store;List<Anime> entries;string status="watching";
  readonly RoundButton[] navigation=new RoundButton[3];Label heading,summary,feedback;TextBox filter;FlowLayoutPanel cards;Panel main,sidebar;Label section,smallLogo;Brand logo;System.Windows.Forms.Timer filterTimer,coverTimer;
  readonly Dictionary<string,AnimeCard> cardIndex=new Dictionary<string,AnimeCard>(StringComparer.Ordinal);
- public MainForm(LibraryStore library,List<Anime> data,CoverService coverService=null,AnitsuSearchCoordinator integration=null){
+ public MainForm(LibraryStore library,List<Anime> data,CoverService coverService=null,IAnitsuWorkspace integration=null){
   covers=coverService??CoverService.Shared;
   store=library;entries=data??new List<Anime>();covers.Folder=Path.Combine(store.Folder,"capas");
+  anitsuWorkspace=integration??new AnitsuWorkspace(store.Folder);
   Text="AniLista — Minha biblioteca de animes";BackColor=Theme.Background;ForeColor=Theme.Text;Font=Theme.Font(this,10);Theme.DarkTitle(this);
   StartPosition=FormStartPosition.CenterScreen;AutoScaleMode=AutoScaleMode.None;MinimumSize=Theme.S(this,920,600);
   Rectangle work=Screen.PrimaryScreen.WorkingArea;Size=new Size(Math.Min(Theme.S(this,1220),work.Width-40),Math.Min(Theme.S(this,800),work.Height-40));
   if(Theme.AppIcon!=null)Icon=Theme.AppIcon;
   BuildLayout();Render(false);
-  anitsuSettings=new AnitsuSettingsStore(store.Folder);anitsuMode=anitsuSettings.Load();anitsuWeb=new AnitsuWebViewProvider(store.Folder);anitsuBridge=new AnitsuBridgeServer();
-  anitsu=integration??new AnitsuSearchCoordinator(()=>anitsuMode,m=>m==AnitsuMode.AppLogin?(IAnitsuSearchProvider)anitsuWeb:anitsuBridge,a=>{if(!IsDisposed)BeginInvoke(a);},s=>{if(!IsDisposed)anitsuFeedback.Text=s;},choices=>{using(var chooser=new AnitsuResultsForm(choices)){return Task.FromResult(chooser.ShowDialog(TopWindow())==DialogResult.OK?chooser.Selected:null);}});
-  anitsu.ResultReady+=delegate{if(!IsDisposed)anitsuCopy.Enabled=true;};
-  anitsuFeedback.Text=anitsuMode==AnitsuMode.Disabled?"Configure a busca automática no Anitsu":anitsuMode==AnitsuMode.AppLogin?"Busca no Anitsu ativada · login no app":"Busca no Anitsu ativada · conecte a extensão";
-  Shown+=delegate{if(anitsuMode==AnitsuMode.BrowserExtension)anitsuBridge.Start();};
   LayoutScaleChanged+=delegate{Rectangle area=Screen.FromHandle(Handle).WorkingArea;MinimumSize=new Size(Math.Min(Theme.S(this,920),area.Width-20),Math.Min(Theme.S(this,600),area.Height-20));AdaptLayout();ResizeCards();ScheduleCovers();};
   if(store.Recovered)Shown+=delegate{Notice.Tell(this,"Biblioteca recuperada","A cópia de segurança da biblioteca foi recuperada. O arquivo anterior foi preservado.");};
   KeyPreview=true;KeyDown+=delegate(object sender,KeyEventArgs e){
    if(e.Control&&e.KeyCode==Keys.N){e.Handled=true;e.SuppressKeyPress=true;AddAnime();}
    else if(e.Control&&e.KeyCode==Keys.F){e.Handled=true;e.SuppressKeyPress=true;filter.Focus();filter.SelectAll();}
   };
-  FormClosed+=delegate{anitsu.Dispose();anitsuWeb.Dispose();anitsuBridge.Dispose();filterTimer.Dispose();coverTimer.Dispose();DisposeCards();};
+  FormClosed+=delegate{anitsuWorkspace.Dispose();filterTimer.Dispose();coverTimer.Dispose();DisposeCards();};
  }
  void BuildLayout(){
   sidebar=new Panel{Dock=DockStyle.Left,Width=Theme.S(this,236),BackColor=Theme.Sidebar};Controls.Add(sidebar);
@@ -54,10 +50,6 @@ public sealed class MainForm:DpiForm {
    string selected=StatusKeys[i];var button=new RoundButton{Nav=true,Under=Theme.Sidebar,Dot=Theme.StatusColor(selected),Text=Theme.StatusName(selected),Font=Theme.Font(this,10,FontStyle.Bold),Cursor=Cursors.Hand,BackColor=Theme.Sidebar,ForeColor=Theme.Muted};
    Theme.Place(this,button,18,142+i*54,200,46);button.Click+=delegate{status=selected;filter.Clear();Render(false);};navigation[i]=button;sidebar.Controls.Add(button);
   }
-  anitsuButton=Theme.Button(this,"Anitsu");Theme.Place(this,anitsuButton,18,318,Math.Min(200,sidebar.Width-36),42);anitsuButton.Click+=delegate{using(var settings=new AnitsuSettingsForm(anitsuMode,store.Folder,anitsuWeb,anitsuBridge,SetAnitsuMode))settings.ShowDialog(this);};sidebar.Controls.Add(anitsuButton);
-  anitsuRetry=Theme.Button(this,"Buscar anime salvo");Theme.Place(this,anitsuRetry,18,368,200,40);anitsuRetry.Click+=delegate{if(anitsuMode==AnitsuMode.Disabled){Notice.Tell(this,"Ative o Anitsu","Escolha um modo no botão Anitsu antes de pesquisar.");return;}using(var choose=new AnitsuSavedForm(entries)){if(choose.ShowDialog(this)==DialogResult.OK&&choose.Selected!=null)anitsu.OnSavedAddition(choose.Selected);}};sidebar.Controls.Add(anitsuRetry);
-  anitsuCopy=Theme.Button(this,"Copiar caminho");Theme.Place(this,anitsuCopy,18,416,200,38);anitsuCopy.Enabled=false;anitsuCopy.Click+=delegate{if(anitsu.LastCandidate!=null)Clipboard.SetText(anitsu.LastCandidate.Path);};sidebar.Controls.Add(anitsuCopy);
-  anitsuFeedback=Theme.Label(this,"Configure a busca automática no Anitsu",9,Theme.Muted);Theme.Place(this,anitsuFeedback,18,466,200,130);sidebar.Controls.Add(anitsuFeedback);
   main=new Panel{Dock=DockStyle.Fill,BackColor=Theme.Background,Padding=new Padding(Theme.S(this,30),Theme.S(this,22),Theme.S(this,24),Theme.S(this,8))};Controls.Add(main);main.BringToFront();
   var header=new Panel{Dock=DockStyle.Top,Height=Theme.S(this,96)};
   heading=Theme.Label(this,"Assistindo",26,Theme.Text,FontStyle.Bold);Theme.Place(this,heading,0,0,520,50);header.Controls.Add(heading);
@@ -83,9 +75,6 @@ public sealed class MainForm:DpiForm {
   if(sidebar==null||cards==null)return;
   bool compact=ClientSize.Width<Theme.S(this,820);
   sidebar.Width=Theme.S(this,compact?100:236);logo.Visible=!compact;smallLogo.Visible=compact;section.Visible=!compact;
-  if(anitsuFeedback!=null)anitsuFeedback.Visible=!compact;
-  if(anitsuButton!=null){anitsuButton.Left=Theme.S(this,compact?6:18);anitsuButton.Width=Theme.S(this,compact?88:200);}
-  if(anitsuRetry!=null){anitsuRetry.Visible=!compact;anitsuCopy.Visible=!compact;}
   for(int i=0;i<navigation.Length;i++){
    var button=navigation[i];button.Nav=!compact;button.Dot=compact?Color.Transparent:Theme.StatusColor(StatusKeys[i]);
    button.Left=Theme.S(this,compact?6:18);button.Width=Theme.S(this,compact?88:200);
@@ -119,7 +108,7 @@ public sealed class MainForm:DpiForm {
     if(!cardIndex.TryGetValue(anime.Id,out card)){
      card=new AnimeCard(anime,changed=>{changed.Validate();SaveEntry(changed,false);},a=>Edit(a),a=>{
       if(Notice.Ask(this,"Remover anime","\""+a.Title+"\" será removido da sua biblioteca.","Remover","Cancelar",true))SaveList(entries.Where(e=>e.Id!=a.Id).Select(e=>e.Copy()).ToList());
-     },Theme.ScaleFor(this),covers);cardIndex.Add(anime.Id,card);cards.Controls.Add(card);
+     },Theme.ScaleFor(this),covers,a=>SearchInAnitsu(a),()=>OpenAnitsuDownloader());cardIndex.Add(anime.Id,card);cards.Controls.Add(card);
     }else card.Bind(anime);
     cards.Controls.SetChildIndex(card,i);
    }
@@ -158,9 +147,10 @@ public sealed class MainForm:DpiForm {
   if(isNew&&entries.Any(a=>(entry.CatalogId>0&&a.CatalogId==entry.CatalogId)||String.Equals(a.Title.Trim(),entry.Title.Trim(),StringComparison.CurrentCultureIgnoreCase))){
    Notice.Tell(TopWindow(),"Anime já adicionado","Esse anime já está na sua biblioteca. Use Editar para mudar a lista ou o episódio.");return false;
   }
-  var next=entries.Select(a=>a.Copy()).ToList();if(isNew)next.Add(entry);else{int index=next.FindIndex(a=>a.Id==entry.Id);if(index<0)return false;next[index]=entry;}bool saved=SaveList(next);if(saved&&isNew)anitsu.OnSavedAddition(entry);return saved;
+  var next=entries.Select(a=>a.Copy()).ToList();if(isNew)next.Add(entry);else{int index=next.FindIndex(a=>a.Id==entry.Id);if(index<0)return false;next[index]=entry;}return SaveList(next);
  }
- void SetAnitsuMode(AnitsuMode mode){anitsuSettings.Save(mode);anitsu.Cancel();anitsuWeb.CloseSession();anitsuBridge.Stop();anitsuMode=mode;if(mode==AnitsuMode.BrowserExtension)anitsuBridge.Start();anitsuFeedback.Text=mode==AnitsuMode.Disabled?"Busca no Anitsu desativada":"Busca automática no Anitsu ativada";}
+ async void SearchInAnitsu(Anime anime){try{await anitsuWorkspace.SearchAsync(anime,this);}catch(Exception e){if(!IsDisposed)Notice.Tell(this,"Anitsu",e.Message);}}
+ async void OpenAnitsuDownloader(){try{await anitsuWorkspace.ShowAsync(this);}catch(Exception e){if(!IsDisposed)Notice.Tell(this,"Anitsu",e.Message);}}
  void Edit(Anime entry){using(var editor=new EditorForm(entry,false,entry.Status,a=>SaveEntry(a,false)))editor.ShowDialog(this);}
  void AddAnime(){
   if(Application.OpenForms.OfType<SearchForm>().Any())return;
