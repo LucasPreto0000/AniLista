@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.7](releases/v1.1.7.md)
+
+Remove a barra de rolagem externa do painel Anitsu, preservando a rolagem interna dos arquivos.
+
 ## [1.1.6](releases/v1.1.6.md)
 
 Modo compacto no Downloader integrado: remove visualmente pasta destino, autenticação por chave e filtro de extensão, reduzindo o espaço ocupado sem alterar o arquivo original 1.6.8.
