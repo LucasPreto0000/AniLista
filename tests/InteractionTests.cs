@@ -56,10 +56,23 @@ class InteractionTests {
     Button(editor,"Adicionar anime").PerformClick();Application.DoEvents();
     Assert(store.Load().Any(a=>a.Title=="Teste cadastro manual"&&a.Episode==5&&a.Total==24&&a.Status=="watching"),"Cadastro manual salva episódio e total");
    }
-   SearchSafety();CardReuseAndDpi();AnitsuSaveBoundary();AnitsuDialogs(folder);
+   SearchSafety();CardReuseAndDpi();AnitsuSaveBoundary();AnitsuDialogs(folder);AnitsuInsideMain(folder);
    Console.WriteLine("PASS: cartões, incremento, conclusão, três listas, reinício e cadastro manual.");return 0;
   }catch(Exception e){Console.WriteLine("FAIL: "+e);return 1;}
   finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}
+ }
+ static void AnitsuInsideMain(string folder){
+  var store=new LibraryStore(Path.Combine(folder,"embedded-main"));
+  using(var main=new MainForm(store,store.Load(),null,new AnitsuProvider()))using(var browser=new AnitsuWebViewForm(store.Folder)){
+   main.ShowInTaskbar=false;main.Opacity=0;main.Show();Application.DoEvents();
+   var attach=typeof(MainForm).GetMethod("ShowAnitsu",BindingFlags.Instance|BindingFlags.NonPublic);
+   Assert(attach!=null,"Principal oferece área interna Anitsu");attach.Invoke(main,new object[]{browser});Application.DoEvents();
+   Assert(!browser.TopLevel&&!browser.ShowInTaskbar&&browser.TopLevelControl==main,"Anitsu é filho da janela principal, sem janela na barra de tarefas");
+   Assert(browser.FormBorderStyle==FormBorderStyle.None&&browser.Dock==DockStyle.Fill&&browser.Visible,"Site ocupa área interna sem moldura");
+   Capture(main,"anitsu-principal-100.png");Button(main,"← Biblioteca").PerformClick();Application.DoEvents();Assert(!browser.Visible,"Retornar esconde Anitsu");Assert(Button(main,"+  Adicionar anime").Visible,"Biblioteca restaurada");
+   attach.Invoke(main,new object[]{browser});main.ApplyScale(1.5f);Application.DoEvents();Assert(browser.Width<=browser.Parent.Width&&browser.Height<=browser.Parent.Height,"Anitsu cabe na área com DPI");Capture(main,"anitsu-principal-150.png");Button(main,"Concluídos").PerformClick();Application.DoEvents();Assert(!browser.Visible,"Lista também volta à biblioteca");
+   main.Close();Assert(browser.IsDisposed,"Fechar principal descarta navegador filho");
+  }
  }
  static void AnitsuDialogs(string folder){
   using(var window=new AnitsuWebViewForm(folder)){

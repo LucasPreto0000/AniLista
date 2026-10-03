@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.5](releases/v1.1.5.md)
+
+Anitsu dentro da janela principal, mantendo a barra lateral e uma opção para voltar à biblioteca. Reutiliza a sessão sem criar outra janela na barra de tarefas.
+
 ## [1.1.4](releases/v1.1.4.md)
 
 Três pontos centralizados e menu com apenas pesquisar no Anitsu. Janela integrada com ícone e sem barra/rodapé adicionais. Reutiliza o Cloud, preenche o nome assim que o campo aparece, elimina a espera de digitação e cancela consultas antigas.

@@ -20,6 +20,7 @@ public sealed class MainForm:DpiForm {
  static readonly string[] StatusKeys={"watching","planned","completed"};
  readonly CoverService covers;
  readonly IAnitsuWorkspace anitsuWorkspace;
+ Panel anitsuArea;RoundButton returnLibrary;
  readonly LibraryStore store;List<Anime> entries;string status="watching";
  readonly RoundButton[] navigation=new RoundButton[3];Label heading,summary,feedback;TextBox filter;FlowLayoutPanel cards;Panel main,sidebar;Label section,smallLogo;Brand logo;System.Windows.Forms.Timer filterTimer,coverTimer;
  readonly Dictionary<string,AnimeCard> cardIndex=new Dictionary<string,AnimeCard>(StringComparer.Ordinal);
@@ -35,6 +36,7 @@ public sealed class MainForm:DpiForm {
   LayoutScaleChanged+=delegate{Rectangle area=Screen.FromHandle(Handle).WorkingArea;MinimumSize=new Size(Math.Min(Theme.S(this,920),area.Width-20),Math.Min(Theme.S(this,600),area.Height-20));AdaptLayout();ResizeCards();ScheduleCovers();};
   if(store.Recovered)Shown+=delegate{Notice.Tell(this,"Biblioteca recuperada","A cópia de segurança da biblioteca foi recuperada. O arquivo anterior foi preservado.");};
   KeyPreview=true;KeyDown+=delegate(object sender,KeyEventArgs e){
+   if(anitsuArea!=null&&anitsuArea.Visible)return;
    if(e.Control&&e.KeyCode==Keys.N){e.Handled=true;e.SuppressKeyPress=true;AddAnime();}
    else if(e.Control&&e.KeyCode==Keys.F){e.Handled=true;e.SuppressKeyPress=true;filter.Focus();filter.SelectAll();}
   };
@@ -48,7 +50,7 @@ public sealed class MainForm:DpiForm {
   section=Theme.Label(this,"MINHA BIBLIOTECA",8.5f,Theme.Muted,FontStyle.Bold);Theme.Place(this,section,26,112,190,20);sidebar.Controls.Add(section);
   for(int i=0;i<StatusKeys.Length;i++){
    string selected=StatusKeys[i];var button=new RoundButton{Nav=true,Under=Theme.Sidebar,Dot=Theme.StatusColor(selected),Text=Theme.StatusName(selected),Font=Theme.Font(this,10,FontStyle.Bold),Cursor=Cursors.Hand,BackColor=Theme.Sidebar,ForeColor=Theme.Muted};
-   Theme.Place(this,button,18,142+i*54,200,46);button.Click+=delegate{status=selected;filter.Clear();Render(false);};navigation[i]=button;sidebar.Controls.Add(button);
+   Theme.Place(this,button,18,142+i*54,200,46);button.Click+=delegate{ShowLibrary();status=selected;filter.Clear();Render(false);};navigation[i]=button;sidebar.Controls.Add(button);
   }
   main=new Panel{Dock=DockStyle.Fill,BackColor=Theme.Background,Padding=new Padding(Theme.S(this,30),Theme.S(this,22),Theme.S(this,24),Theme.S(this,8))};Controls.Add(main);main.BringToFront();
   var header=new Panel{Dock=DockStyle.Top,Height=Theme.S(this,96)};
@@ -70,6 +72,18 @@ public sealed class MainForm:DpiForm {
   Shown+=delegate{ScheduleCovers();};
   main.Controls.Add(cards);main.Controls.Add(footer);main.Controls.Add(searchRow);main.Controls.Add(header);
   Resize+=delegate{AdaptLayout();};AdaptLayout();
+ }
+ internal void ShowAnitsu(AnitsuWebViewForm browser){
+  if(anitsuArea==null){
+   anitsuArea=new Panel{Dock=DockStyle.Fill,BackColor=Theme.Background};Controls.Add(anitsuArea);
+   returnLibrary=Theme.Button(this,"← Biblioteca");returnLibrary.Dock=DockStyle.Bottom;returnLibrary.Height=Theme.S(this,44);returnLibrary.Under=Theme.Sidebar;returnLibrary.Click+=delegate{ShowLibrary();};sidebar.Controls.Add(returnLibrary);
+  }
+  if(browser.Parent!=anitsuArea){browser.TopLevel=false;browser.FormBorderStyle=FormBorderStyle.None;browser.ShowInTaskbar=false;browser.MinimumSize=Size.Empty;browser.Dock=DockStyle.Fill;anitsuArea.Controls.Add(browser);}
+  main.Visible=false;anitsuArea.Visible=true;anitsuArea.BringToFront();returnLibrary.Visible=true;browser.Show();browser.BringToFront();browser.Focus();
+ }
+ void ShowLibrary(){
+  var workspace=anitsuWorkspace as AnitsuWorkspace;if(workspace!=null)workspace.PauseSearch();
+  if(anitsuArea!=null)anitsuArea.Visible=false;if(returnLibrary!=null)returnLibrary.Visible=false;main.Visible=true;main.BringToFront();ScheduleCovers();
  }
  void AdaptLayout(){
   if(sidebar==null||cards==null)return;

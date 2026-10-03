@@ -62,7 +62,7 @@ O aplicativo organiza sua biblioteca e permite abrir o Anitsu Downloader integra
 
 ## Integração Anitsu
 
-Use **⋯ → Pesquisar no Anitsu**, no cartão do anime. A busca abre uma janela do Cloud com **Anitsu Downloader 1.6.8 incorporado ao EXE**. Entre na sua conta nessa janela e selecione os arquivos para baixar. Resultados ambíguos pedem escolher uma pasta; falhas na busca não afetam a biblioteca. A janela mostra o site diretamente, sem barra adicional, com preenchimento automático do nome e reaproveitamento da página nas próximas buscas.
+Use **⋯ → Pesquisar no Anitsu**, no cartão do anime. A busca abre o Cloud na área central da janela principal com **Anitsu Downloader 1.6.8 incorporado ao EXE**. Entre na sua conta nessa área e selecione os arquivos para baixar. Resultados ambíguos pedem escolher uma pasta; falhas na busca não afetam a biblioteca. A área integrada mostra o site diretamente, sem barra adicional, com preenchimento automático do nome e reaproveitamento da página nas próximas buscas. Use **← Biblioteca** ou uma lista da barra lateral para voltar.
 
 Consulte [como usar](docs/ANITSU.md). Requer o WebView2 Runtime da Microsoft. Não exige extensão nem pasta de scripts ao lado do aplicativo. Downloads diretos vão para Downloads ou para o destino configurado anteriormente.
 

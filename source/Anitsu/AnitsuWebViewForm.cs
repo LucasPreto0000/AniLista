@@ -32,21 +32,22 @@ public sealed class AnitsuWebViewForm:DpiForm {
   view.CoreWebView2.WebMessageReceived+=delegate(object sender,CoreWebView2WebMessageReceivedEventArgs e){
    if(!AnitsuApi.IsSite(e.Source))return;
    try{var row=new JavaScriptSerializer{MaxJsonLength=AnitsuApi.MaxBytes+8192}.DeserializeObject(e.WebMessageAsJson) as Dictionary<string,object>;if(row==null)return;
-    if(AnitsuApi.StringValue(row,"channel")=="anilista-cloud-typing"&&AnitsuDownloadPolicy.IsCloud(e.Source)){CancelSearch();return;}if(AnitsuApi.StringValue(row,"channel")=="anilista-cloud-ready"&&AnitsuDownloadPolicy.IsCloud(e.Source)){pageReady=true;if(loginTitle.Length>0){string resume=loginTitle;loginTitle="";BeginInvoke(new Action(async delegate{try{await FindAnime(resume,lifetime.Token);}catch(OperationCanceledException){}catch(Exception error){ShowStatus(error.Message);}}));}return;}string id=AnitsuApi.StringValue(row,"id");TaskCompletionSource<bool> nav;if(navigation.TryGetValue(id,out nav)){object ok;nav.TrySetResult(row.TryGetValue("ok",out ok)&&ok is bool&&(bool)ok);return;}TaskCompletionSource<AnitsuSearchResult> request;if(!pending.TryGetValue(id,out request))return;
+    if(AnitsuApi.StringValue(row,"channel")=="anilista-cloud-typing"&&AnitsuDownloadPolicy.IsCloud(e.Source)){CancelSearch();return;}if(AnitsuApi.StringValue(row,"channel")=="anilista-cloud-ready"&&AnitsuDownloadPolicy.IsCloud(e.Source)){pageReady=true;if(loginTitle.Length>0){string resume=loginTitle;loginTitle="";BeginInvoke(new Action(async delegate{if(!Visible||closing)return;try{await FindAnime(resume,lifetime.Token);}catch(OperationCanceledException){}catch(Exception error){ShowStatus(error.Message);}}));}return;}string id=AnitsuApi.StringValue(row,"id");TaskCompletionSource<bool> nav;if(navigation.TryGetValue(id,out nav)){object ok;nav.TrySetResult(row.TryGetValue("ok",out ok)&&ok is bool&&(bool)ok);return;}TaskCompletionSource<AnitsuSearchResult> request;if(!pending.TryGetValue(id,out request))return;
     int code=Convert.ToInt32(row["status"]);request.TrySetResult(AnitsuApi.FromHttp(code,AnitsuApi.StringValue(row,"body")));
    }catch(Exception){}
   };
  }
- public void ShowStatus(string text){if(!IsDisposed&&!closing&&Visible)Notice.Tell(this,"Anitsu",text);}
+ public void ShowStatus(string text){if(!IsDisposed&&!closing&&Visible)Notice.Tell(TopLevelControl??this,"Anitsu",text);}
  public CoreWebView2 Core{get{return view.CoreWebView2;}}
  void CancelSearch(){if(currentSearch!=null)currentSearch.Cancel();}
+ public void SuspendSearch(){loginTitle="";CancelSearch();}
  public async Task ShowCloud(CancellationToken token){CancelSearch();using(var operation=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token)){await AnitsuAsync.Wait(Initialize().ContinueWith(t=>{t.GetAwaiter().GetResult();return true;},TaskScheduler.Default),operation.Token);await NavigateCloud(operation.Token);}}
  public async Task FindAnime(string title,CancellationToken token){CancelSearch();using(var operation=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token)){currentSearch=operation;try{await FindAnimeCore(title,operation.Token);}finally{if(currentSearch==operation)currentSearch=null;}}}
  async Task FindAnimeCore(string title,CancellationToken token){
   if(String.IsNullOrWhiteSpace(title)||title.Length>180){ShowStatus("Digite o nome do anime.");return;}
   loginTitle="";var result=await Search(title,token);token.ThrowIfCancellationRequested();
   if(result.State!=AnitsuSearchState.Found){if(result.State==AnitsuSearchState.LoginRequired){loginTitle=title;view.CoreWebView2.Navigate("https://anitsu.moe/");}else ShowStatus(result.State==AnitsuSearchState.NotFound?"Nenhuma pasta encontrada para "+title:result.Message);return;}
-  var exact=AnitsuMatcher.Match(title,null,result.Candidates);AnitsuCandidate choice=null;if(exact.Count==1)choice=exact[0];else using(var choose=new AnitsuResultsForm(exact.Count>0?exact:result.Candidates)){if(choose.ShowDialog(this)==DialogResult.OK)choice=choose.Selected;}
+  var exact=AnitsuMatcher.Match(title,null,result.Candidates);AnitsuCandidate choice=null;if(exact.Count==1)choice=exact[0];else using(var choose=new AnitsuResultsForm(exact.Count>0?exact:result.Candidates)){if(choose.ShowDialog(TopLevelControl??this)==DialogResult.OK)choice=choose.Selected;}
   token.ThrowIfCancellationRequested();if(choice==null||IsDisposed)return;bool opened=false;try{opened=await OpenFolder(choice,token);}catch(TimeoutException){}token.ThrowIfCancellationRequested();if(!opened){Clipboard.SetText(choice.Path);ShowStatus("A pasta não abriu. O caminho foi copiado: "+choice.Path);}
  }
  async Task<bool> OpenFolder(AnitsuCandidate candidate,CancellationToken token){

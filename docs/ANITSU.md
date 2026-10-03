@@ -1,13 +1,14 @@
 # Anitsu Downloader dentro do AniLista
 
 1. No cartão do anime, clique em **⋯ → Pesquisar no Anitsu**. Esta é a única opção do menu.
-2. A janela abre diretamente no Cloud, sem barra ou rodapé adicionais. O nome é preenchido assim que o campo fica disponível. Uma correspondência exata e única abre a pasta; resultados ambíguos pedem escolher um caminho.
+2. O Cloud abre na área central da janela principal, sem outra janela na barra de tarefas. O nome é preenchido assim que o campo fica disponível. Uma correspondência exata e única abre a pasta; resultados ambíguos pedem escolher um caminho.
 3. Se precisar entrar na conta, o app abre o login do Anitsu. Depois de entrar, abra o Cloud pelo próprio site; a pesquisa escolhida é retomada automaticamente. Esta sessão é própria do aplicativo.
 4. Selecione os arquivos no painel do **Anitsu Downloader 1.6.8** e inicie o download.
+5. Use **← Biblioteca** ou escolha uma lista na barra lateral para voltar. A sessão e o navegador são reaproveitados; retornar cancela a busca automática pendente.
 
 Novas buscas reaproveitam o Cloud aberto. A espera de 300 ms da busca do site é removida no navegador integrado; consultas antigas são canceladas e pedidos simultâneos iguais compartilham uma resposta. O tempo de resposta da rede e do serviço continua dependendo do Anitsu.
 
-Os downloads diretos usam Downloads ou o destino já configurado anteriormente. Arquivos existentes são preservados, com sufixo numérico em nomes repetidos. Adicionar ou editar animes não dispara buscas. Se a pasta não abrir, o app copia o caminho e mostra um aviso. Fechar a janela encerra downloads diretos em andamento; fechar o AniLista também fecha sua janela Anitsu.
+Os downloads diretos usam Downloads ou o destino já configurado anteriormente. Arquivos existentes são preservados, com sufixo numérico em nomes repetidos. Adicionar ou editar animes não dispara buscas. Se a pasta não abrir, o app copia o caminho e mostra um aviso. Downloads iniciados continuam ao retornar à biblioteca; fechar o AniLista encerra o navegador e os downloads em andamento.
 
 ## Downloader incorporado
 

@@ -10,16 +10,16 @@ class AnitsuEmbeddedSmoke {
  [STAThread]static int Main(){WebViewDependencies.Register();return Run();}
  static int Run(){
   string folder=Path.Combine(Path.GetTempPath(),"AniLista-embedded-smoke-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(folder);int exit=1;
-  using(var owner=new Form{ShowInTaskbar=false,Opacity=0}){
+  var store=new LibraryStore(Path.Combine(folder,"library"));using(var owner=new MainForm(store,store.Load()){ShowInTaskbar=false,Opacity=0}){
    owner.Shown+=async delegate{try{await Check(owner,folder);exit=0;Console.WriteLine("PASS: real WebView2, bundled panel, search/folder, native download, collision preservation and HTTP 401 callback");}catch(Exception error){Console.WriteLine("FAIL: "+error);}finally{owner.Close();}};
    Application.Run(owner);
   }
   try{Directory.Delete(folder,true);}catch(IOException){}catch(UnauthorizedAccessException){}return exit;
  }
- static async Task Check(Form owner,string folder){
+ static async Task Check(MainForm owner,string folder){
   string destination=Path.Combine(folder,"downloads");Directory.CreateDirectory(destination);File.WriteAllText(Path.Combine(destination,"Lain.mkv"),"keep");File.WriteAllText(Path.Combine(folder,"anitsu-download-folder.txt"),destination);
   using(var form=new AnitsuWebViewForm(folder))using(var timeout=new CancellationTokenSource(60000)){
-   form.Show(owner);await form.Initialize();var core=form.Core;
+   typeof(MainForm).GetMethod("ShowAnitsu",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(owner,new object[]{form});Assert(!form.TopLevel&&form.TopLevelControl==owner,"Browser hosted in main window");await form.Initialize();var core=form.Core;
    core.AddWebResourceRequestedFilter("https://nuvem.anitsu.moe/*",CoreWebView2WebResourceContext.All);
    int pages=0;
    core.WebResourceRequested+=delegate(object sender,CoreWebView2WebResourceRequestedEventArgs e){
