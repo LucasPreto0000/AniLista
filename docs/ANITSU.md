@@ -14,6 +14,8 @@ Os downloads diretos usam Downloads ou o destino já configurado anteriormente. 
 
 O executável contém o arquivo `Anitsu-Downloader.user.js` da [release 1.6.8](https://github.com/LucasPreto0000/Anitsu-Downloader/releases/tag/v1.6.8), sem alterar seus bytes. SHA256: `b160100e1149777274a3ca5eceb824876a8de98f545b32b17dcf431eb374b4d6`. Autores: TheCyBee & Saitama; licença MIT declarada no userscript.
 
+O adaptador aplica um modo compacto e oculta os campos de pasta destino, chave de autenticação e filtro de extensão para deixar o painel menor. O destino padrão continua sendo usado nos downloads.
+
 Um adaptador fornece as APIs GM dentro do WebView2. Não é necessário instalar Tampermonkey, carregar uma extensão nem manter uma pasta de scripts junto do EXE. Downloads diretos usam a sessão do próprio Cloud; respostas 401/403 são repassadas ao script para renovação da sessão. O modo AB Download Manager exige que esse programa externo esteja instalado e configurado. IDM fica oculto porque sua extensão de navegador não funciona no WebView2.
 
 O Windows precisa do [WebView2 Runtime da Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/). O SDK e os loaders estão incorporados ao EXE; somente o Runtime é externo.

@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.6](releases/v1.1.6.md)
+
+Modo compacto no Downloader integrado: remove visualmente pasta destino, autenticação por chave e filtro de extensão, reduzindo o espaço ocupado sem alterar o arquivo original 1.6.8.
+
 ## [1.1.5](releases/v1.1.5.md)
 
 Anitsu dentro da janela principal, mantendo a barra lateral e uma opção para voltar à biblioteca. Reutiliza a sessão sem criar outra janela na barra de tarefas.

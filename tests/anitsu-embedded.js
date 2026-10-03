@@ -23,8 +23,8 @@ async function main() {
   const aborted = f.window.GM_download({url: 'x', onload: () => done++}); aborted.abort(); f.reply({event: 'load'}); assert.equal(done, 0);
   f.window.GM_setValue('key', {port: 1234}); assert.equal(f.window.GM_getValue('key').port, 1234); assert.equal(f.window.GM_getValue('missing', 'fallback'), 'fallback');
   assert.equal(fixture('https://discord.com').window.GM_download, undefined);
-  let changed = false; const idm = {checked: true, onchange: () => changed = true}, label = {style: {}};
-  f.document.getElementById = id => id === 'anu-idm' ? idm : label; f.window.aniListaEmbeddedReady(); assert.equal(idm.checked, false); assert.equal(idm.disabled, true); assert.equal(label.hidden, true); assert.equal(label.style.display, 'none'); assert.equal(changed, true);
+  let changed = false; const idm = {checked: true, onchange: () => changed = true}, label = {style: {}}; let compactStyle;
+  f.document.getElementById = id => id === 'anu-idm' ? idm : id === 'anu-idm-label' ? label : null; f.document.head.appendChild = node => {compactStyle = node;}; f.window.aniListaEmbeddedReady(); assert.equal(idm.checked, false); assert.equal(idm.disabled, true); assert.equal(label.hidden, true); assert.equal(label.style.display, 'none'); assert.equal(changed, true); assert.equal(compactStyle.id, 'anilista-compact-downloader'); assert.match(compactStyle.textContent, /anu-abdm-cfg/); assert.match(compactStyle.textContent, /anu-filter/);
   for (const outcome of ['success', 'noop', 'cancel', 'late']) {
     let now = 0, clicks = 0, messages = [], queries = 0; const input = {dispatchEvent() {}};
     const w = {chrome: {webview: {postMessage: x => messages.push(x)}}, __aniListaNavCancel: {n: outcome === 'cancel'}};

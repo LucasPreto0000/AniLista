@@ -21,6 +21,12 @@
     if (idm && idm.checked) {idm.checked = false; if (idm.onchange) idm.onchange();}
     if (idm) idm.disabled = true;
     if (label) {label.hidden = true; label.style.display = 'none';}
+    if (!document.getElementById('anilista-compact-downloader')) {
+      const style = document.createElement('style');
+      style.id = 'anilista-compact-downloader';
+      style.textContent = '#anu-abdm-cfg .anu-cfg-row:nth-child(2),#anu-abdm-auth-row,#anu-filter{display:none!important;}';
+      document.head.appendChild(style);
+    }
   };
   window.chrome.webview.addEventListener('message', event => {
     const message = event.data;
