@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.14](releases/v1.1.14.md)
+
+Menu de pesquisa no Anitsu redesenhado como painel interno com cantos arredondados, texto centralizado e cursor personalizado. Fecha com Esc, ao clicar fora ou ao selecionar a pesquisa. Inclui o painel Anitsu compacto, sem barra externa e com zoom de 90%.
+
 ## [1.1.8](releases/v1.1.8.md)
 
 O site Anitsu integrado inicia com zoom padrão de 90%, mantendo o restante do aplicativo em 100%.
