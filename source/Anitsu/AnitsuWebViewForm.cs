@@ -58,6 +58,11 @@ public sealed class AnitsuWebViewForm:DpiForm {
  public void SuspendSearch(){loginTitle="";CancelSearch();}
  public async Task ShowCloud(CancellationToken token){CancelSearch();using(var operation=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token)){await AnitsuAsync.Wait(Initialize().ContinueWith(t=>{t.GetAwaiter().GetResult();return true;},TaskScheduler.Default),operation.Token);await NavigateCloud(operation.Token);}}
  public async Task FindAnime(string title,CancellationToken token){CancelSearch();using(var operation=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token)){currentSearch=operation;try{await FindAnimeCore(title,operation.Token);}finally{if(currentSearch==operation)currentSearch=null;}}}
+ public async Task RenewSession(CancellationToken token){
+  await AnitsuAsync.Wait(Initialize().ContinueWith(t=>{t.GetAwaiter().GetResult();return true;},TaskScheduler.Default),token);await NavigateCloud(token);
+  string id=Guid.NewGuid().ToString("N");var completion=new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);navigation.Add(id,completion);
+  try{await view.CoreWebView2.ExecuteScriptAsync("window.aniListaRenewSession("+new JavaScriptSerializer().Serialize(id)+");");await AnitsuAsync.Wait(completion.Task,token);}finally{navigation.Remove(id);}
+ }
  async Task FindAnimeCore(string title,CancellationToken token){
   if(String.IsNullOrWhiteSpace(title)||title.Length>180){ShowStatus("Digite o nome do anime.");return;}
   loginTitle="";var result=await Search(title,token);token.ThrowIfCancellationRequested();

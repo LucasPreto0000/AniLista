@@ -35,6 +35,9 @@ class AnitsuEmbeddedSmoke {
    Assert(await core.ExecuteScriptAsync("!!document.getElementById('anu-panel')")=="true","Exact bundled userscript panel mounted");
    Assert(await core.ExecuteScriptAsync("document.getElementById('anu-idm-label').hidden")=="true","Unsupported browser extension mode hidden");
    Assert(await core.ExecuteScriptAsync("getComputedStyle(document.getElementById('anu-idm-label')).display === 'none'")=="true","Unsupported mode visually hidden");
+   await core.ExecuteScriptAsync("window.__smokeRenewals=0;const b=document.getElementById('anu-session'),original=b.onclick;b.onclick=function(){window.__smokeRenewals++;return original.call(this);};");
+   await form.RenewSession(timeout.Token);await form.RenewSession(timeout.Token);
+   Assert(await core.ExecuteScriptAsync("window.__smokeRenewals === 2")=="true","Each opening invokes the bundled session renewal without deleting login");
    await form.FindAnime("Lain",timeout.Token);
    Assert(await core.ExecuteScriptAsync("document.querySelector('input[placeholder^=Buscar]').value === 'Lain'")=="true","Anime name filled automatically");
    await form.FindAnime("Lain",timeout.Token);Assert(pages==2,"Repeated searches reuse loaded Cloud without reload");

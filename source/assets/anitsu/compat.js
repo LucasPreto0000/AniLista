@@ -15,6 +15,19 @@
   window.GM_setValue = (key, value) => localStorage.setItem('anilista-gm-' + key, JSON.stringify(value));
   window.GM_xmlhttpRequest = details => request('request', details);
   window.GM_download = details => request('download', details);
+  window.aniListaRenewSession = async id => {
+    let button = null;
+    const deadline = Date.now() + 18000;
+    while (!button && Date.now() < deadline) {
+      button = document.getElementById('anu-session');
+      if (!button || typeof button.onclick !== 'function') {button = null; await new Promise(resolve => setTimeout(resolve, 50));}
+    }
+    if (!button) {window.chrome.webview.postMessage({id, ok: false}); return;}
+    // Use the Downloader's own refresh function and its existing in-flight lock.
+    button.click();
+    while (button.getAttribute('aria-busy') === 'true' && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
+    window.chrome.webview.postMessage({id, ok: button.getAttribute('aria-busy') !== 'true' && button.classList.contains('ok')});
+  };
   window.aniListaEmbeddedReady = () => {
     // WebView2 cannot load the IDM browser extension. Keep direct/ABDM available.
     const idm = document.getElementById('anu-idm'), label = document.getElementById('anu-idm-label');

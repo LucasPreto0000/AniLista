@@ -12,6 +12,14 @@ function fixture(origin = 'https://nuvem.anitsu.moe') {
 }
 async function main() {
   await readyTests();
+  const session = fixture(); session.ctx.setTimeout = setTimeout;
+  let busy = false, renewals = 0;
+  const sessionButton = {onclick() {}, click() {renewals++; busy = true; setTimeout(() => {busy = false;}, 80);}, getAttribute: () => busy ? 'true' : 'false', classList: {contains: () => true}};
+  session.document.getElementById = id => id === 'anu-session' ? sessionButton : null;
+  const renewal = session.window.aniListaRenewSession('session-1');
+  assert.equal(renewals, 1); assert.equal(session.sent.length, 0, 'Search waits for the session renewal');
+  await renewal; assert.equal(session.sent.at(-1).id, 'session-1'); assert.equal(session.sent.at(-1).ok, true);
+  await session.window.aniListaRenewSession('session-2'); assert.equal(renewals, 2, 'Each opening renews the session again');
   const f = fixture(); let response;
   f.window.GM_xmlhttpRequest({url: 'https://graphql.anilist.co/', method: 'POST', data: '{}', onload: x => response = x});
   f.reply({event: 'load', page: 'unrelated', body: 'wrong'}); assert.equal(response, undefined);
