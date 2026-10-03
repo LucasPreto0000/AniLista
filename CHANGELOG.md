@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.8](releases/v1.1.8.md)
+
+O site Anitsu integrado inicia com zoom padrão de 90%, mantendo o restante do aplicativo em 100%.
+
 ## [1.1.7](releases/v1.1.7.md)
 
 Remove a barra de rolagem externa do painel Anitsu, preservando a rolagem interna dos arquivos.

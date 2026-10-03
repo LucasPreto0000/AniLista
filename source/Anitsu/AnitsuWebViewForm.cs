@@ -24,7 +24,7 @@ public sealed class AnitsuWebViewForm:DpiForm {
  public Task Initialize(){if(init==null)init=InitializeCore();return init;}
  async Task InitializeCore(){
   WebViewDependencies.PrepareLoader();var environment=await CoreWebView2Environment.CreateAsync(null,profile,null);await view.EnsureCoreWebView2Async(environment);
-  view.CoreWebView2.Settings.AreDevToolsEnabled=false;view.CoreWebView2.Settings.IsWebMessageEnabled=true;
+  view.CoreWebView2.Settings.AreDevToolsEnabled=false;view.CoreWebView2.Settings.IsWebMessageEnabled=true;view.ZoomFactor=0.9;
   await view.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(EmbeddedAnitsuAssets.Bootstrap);
   downloader=new AnitsuDownloaderBridge(view.CoreWebView2,dataFolder,delegate{});
   view.CoreWebView2.NavigationStarting+=delegate(object sender,CoreWebView2NavigationStartingEventArgs e){if(!AnitsuDownloadPolicy.IsNavigation(e.Uri))e.Cancel=true;else pageReady=false;};
@@ -39,6 +39,7 @@ public sealed class AnitsuWebViewForm:DpiForm {
  }
  public void ShowStatus(string text){if(!IsDisposed&&!closing&&Visible)Notice.Tell(TopLevelControl??this,"Anitsu",text);}
  public CoreWebView2 Core{get{return view.CoreWebView2;}}
+ public double BrowserZoomFactor{get{return view.ZoomFactor;}}
  void CancelSearch(){if(currentSearch!=null)currentSearch.Cancel();}
  public void SuspendSearch(){loginTitle="";CancelSearch();}
  public async Task ShowCloud(CancellationToken token){CancelSearch();using(var operation=CancellationTokenSource.CreateLinkedTokenSource(token,lifetime.Token)){await AnitsuAsync.Wait(Initialize().ContinueWith(t=>{t.GetAwaiter().GetResult();return true;},TaskScheduler.Default),operation.Token);await NavigateCloud(operation.Token);}}

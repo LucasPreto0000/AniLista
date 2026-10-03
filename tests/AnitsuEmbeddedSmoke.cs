@@ -19,7 +19,7 @@ class AnitsuEmbeddedSmoke {
  static async Task Check(MainForm owner,string folder){
   string destination=Path.Combine(folder,"downloads");Directory.CreateDirectory(destination);File.WriteAllText(Path.Combine(destination,"Lain.mkv"),"keep");File.WriteAllText(Path.Combine(folder,"anitsu-download-folder.txt"),destination);
   using(var form=new AnitsuWebViewForm(folder))using(var timeout=new CancellationTokenSource(60000)){
-   typeof(MainForm).GetMethod("ShowAnitsu",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(owner,new object[]{form});Assert(!form.TopLevel&&form.TopLevelControl==owner,"Browser hosted in main window");await form.Initialize();var core=form.Core;
+   typeof(MainForm).GetMethod("ShowAnitsu",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).Invoke(owner,new object[]{form});Assert(!form.TopLevel&&form.TopLevelControl==owner,"Browser hosted in main window");await form.Initialize();Assert(Math.Abs(form.BrowserZoomFactor-0.9)<0.001,"Anitsu site starts at 90% zoom");var core=form.Core;
    core.AddWebResourceRequestedFilter("https://nuvem.anitsu.moe/*",CoreWebView2WebResourceContext.All);
    int pages=0;
    core.WebResourceRequested+=delegate(object sender,CoreWebView2WebResourceRequestedEventArgs e){
