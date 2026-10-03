@@ -47,9 +47,9 @@ class AnitsuTests {
  static async Task NativeHelperTests(){
   int exit;Assert(AnitsuNativeHost.TryRun(new[]{"chrome-extension://untrusted/"},out exit)&&exit==1,"Untrusted native origin rejected");
   using(var bridge=new AnitsuBridgeServer()){
-   bridge.Start();using(var helper=new Process{StartInfo=new ProcessStartInfo(typeof(AnitsuApi).Assembly.Location,ExtensionIdentity.Origin){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true}}){
+   bridge.Start();using(var helper=new Process{StartInfo=new ProcessStartInfo(typeof(AnitsuApi).Assembly.Location,ExtensionIdentity.Origin+" --native-host-diagnostics"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true}}){
     helper.Start();try{
-     AnitsuNativeProtocol.Write(helper.StandardInput.BaseStream,AnitsuNativeProtocol.Json(new{type="hello",extension=ExtensionIdentity.Id}));Assert(SpinWait.SpinUntil(()=>bridge.Connected,5000),"Single EXE native helper handshake");
+     AnitsuNativeProtocol.Write(helper.StandardInput.BaseStream,AnitsuNativeProtocol.Json(new{type="hello",extension=ExtensionIdentity.Id}));bool handshake=SpinWait.SpinUntil(()=>bridge.Connected,5000);if(!handshake){bridge.Stop();helper.StandardInput.Close();if(helper.WaitForExit(5000))Console.WriteLine("Native helper exit="+helper.ExitCode+"; diagnostics="+helper.StandardError.ReadToEnd());}Assert(handshake,"Single EXE native helper handshake");
      var search=bridge.SearchAsync("Lain",CancellationToken.None);var outgoing=AnitsuNativeProtocol.Parse(AnitsuNativeProtocol.Read(helper.StandardOutput.BaseStream));
      AnitsuNativeProtocol.Write(helper.StandardInput.BaseStream,AnitsuNativeProtocol.Json(new{type="result",id=AnitsuApi.StringValue(outgoing,"id"),status=401,body="{}"}));Assert((await search).State==AnitsuSearchState.LoginRequired,"Native stdio transport preserves login state");
     }finally{bridge.Stop();helper.StandardInput.Close();}
