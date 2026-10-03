@@ -10,7 +10,7 @@ public sealed class AnimeCard:LinePanel {
  readonly CoverBox picture;
  readonly Label title,progress;
  readonly RoundButton action;
- readonly RoundButton more;readonly ContextMenuStrip options;
+ readonly RoundButton more;readonly AnimeActionMenu options;
  CancellationTokenSource coverRequest;
  bool coverLoaded,coverVisible;
  public readonly float InitialScale;
@@ -18,9 +18,8 @@ public sealed class AnimeCard:LinePanel {
   covers=service??CoverService.Shared;
   InitialScale=scale;
   Width=Theme.S(this,400);Height=Theme.S(this,200);Margin=new Padding(0,0,Theme.S(this,14),Theme.S(this,14));
-  options=new ContextMenuStrip{BackColor=Theme.Surface,ForeColor=Theme.Text,Font=Theme.Font(this,10),ShowImageMargin=false};
-  options.Items.Add("Pesquisar no Anitsu",null,delegate{if(searchAnitsu!=null)searchAnitsu(anime.Copy());}).Enabled=searchAnitsu!=null;
-  more=Theme.Button(this,"⋯");more.Ellipsis=true;more.Under=Theme.Surface;more.Font=Theme.Font(this,17,FontStyle.Bold);more.ForeColor=Theme.Muted;more.Anchor=AnchorStyles.Top|AnchorStyles.Right;more.ContextMenuStrip=options;more.Enabled=searchAnitsu!=null;more.SetBounds(Width-Theme.S(this,48),Theme.S(this,12),Theme.S(this,32),Theme.S(this,30));more.Click+=delegate{options.Show(more,new Point(0,more.Height));};Controls.Add(more);
+  options=new AnimeActionMenu(delegate{if(searchAnitsu!=null)searchAnitsu(anime.Copy());});
+  more=Theme.Button(this,"⋯");more.Ellipsis=true;more.Under=Theme.Surface;more.Font=Theme.Font(this,17,FontStyle.Bold);more.ForeColor=Theme.Muted;more.Anchor=AnchorStyles.Top|AnchorStyles.Right;more.Enabled=searchAnitsu!=null;more.SetBounds(Width-Theme.S(this,48),Theme.S(this,12),Theme.S(this,32),Theme.S(this,30));more.Click+=delegate{options.Toggle(more);};Controls.Add(more);
   picture=new CoverBox{Under=Theme.Surface};Theme.Place(this,picture,16,16,88,124);Controls.Add(picture);
   int left=Theme.S(this,116),width=Width-left-Theme.S(this,16);
   title=Theme.Label(this,"",12,Theme.Text,FontStyle.Bold);title.AutoEllipsis=true;title.BackColor=Theme.Surface;title.SetBounds(left,Theme.S(this,46),width,Theme.S(this,46));title.Anchor=AnchorStyles.Top|AnchorStyles.Left|AnchorStyles.Right;Controls.Add(title);

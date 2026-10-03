@@ -56,10 +56,26 @@ class InteractionTests {
     Button(editor,"Adicionar anime").PerformClick();Application.DoEvents();
     Assert(store.Load().Any(a=>a.Title=="Teste cadastro manual"&&a.Episode==5&&a.Total==24&&a.Status=="watching"),"Cadastro manual salva episódio e total");
    }
-   SearchSafety();CardReuseAndDpi();AnitsuSaveBoundary();AnitsuDialogs(folder);AnitsuInsideMain(folder);
+   SearchSafety();CardReuseAndDpi();AnitsuSaveBoundary();AnitsuDialogs(folder);AnitsuInsideMain(folder);AnimeMenu();
    Console.WriteLine("PASS: cartões, incremento, conclusão, três listas, reinício e cadastro manual.");return 0;
   }catch(Exception e){Console.WriteLine("FAIL: "+e);return 1;}
   finally{if(Directory.Exists(folder))Directory.Delete(folder,true);}
+ }
+ static void AnimeMenu(){
+  using(var form=new DpiForm()){form.ClientSize=new Size(440,260);form.BackColor=Theme.Background;form.ShowInTaskbar=false;form.Opacity=0;
+   int calls=0;var card=new AnimeCard(new Anime{Title="Sousou no Frieren",Status="watching",Total=28},delegate{},delegate{},delegate{},1,null,delegate{calls++;});form.Controls.Add(card);
+   form.Show();Application.DoEvents();var more=card.Controls.OfType<RoundButton>().Single(b=>b.Ellipsis);
+   more.PerformClick();Application.DoEvents();var menu=form.Controls.OfType<AnimeActionMenu>().Single();
+   Assert(menu.Visible&&menu.Right<=form.ClientSize.Width&&menu.Bottom<=form.ClientSize.Height,"Menu fica dentro da janela");
+   Assert(!menu.Region.IsVisible(0,0)&&menu.Region.IsVisible(menu.Width/2,menu.Height/2),"Canto externo do painel está recortado, centro preservado");
+   var search=menu.Controls.OfType<RoundButton>().Single();Assert(search.Cursor.Handle==AppCursors.Hand.Handle,"Menu usa mão personalizada");
+   Directory.CreateDirectory("qa");using(var image=new Bitmap(menu.Width,menu.Height))using(var output=new Bitmap(menu.Width+20,menu.Height+20)){
+    menu.DrawToBitmap(image,menu.ClientRectangle);using(var g=Graphics.FromImage(output)){g.Clear(Theme.Background);g.TranslateTransform(10,10);g.SetClip(menu.Region, System.Drawing.Drawing2D.CombineMode.Replace);g.DrawImageUnscaled(image,0,0);}output.Save("qa/anime-menu-rounded.png",System.Drawing.Imaging.ImageFormat.Png);
+   }
+   search.PerformClick();Assert(calls==1&&!menu.Visible,"Pesquisar dispara uma vez e fecha o menu");
+   more.PerformClick();more.PerformClick();Assert(!menu.Visible,"Três pontos alternam abertura e fechamento");
+   more.PerformClick();var escape=Message.Create(form.Handle,0x100,new IntPtr((int)Keys.Escape),IntPtr.Zero);Assert(menu.PreFilterMessage(ref escape)&&!menu.Visible,"Esc fecha menu");form.Close();
+  }
  }
  static void AnitsuInsideMain(string folder){
   var store=new LibraryStore(Path.Combine(folder,"embedded-main"));
@@ -99,7 +115,7 @@ class InteractionTests {
     anime.Episode=1;anime.Title="Título atualizado";Assert((bool)save.Invoke(main,new object[]{anime,false})&&provider.Requests==0,"Edição não dispara busca");
     Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title=anime.Title},true})&&provider.Requests==0,"Duplicata não dispara busca");
     byte[] before=File.ReadAllBytes(store.FilePath),backup=File.ReadAllBytes(store.BackupPath(0));
-    var more=Button(main,"⋯");Assert(more.Right<=more.Parent.Width&&more.Top>=0,"Três pontinhos cabem no cartão");more.ContextMenuStrip.Items[0].PerformClick();Assert(provider.Requests==1&&provider.Title==anime.Title,"Menu pesquisa o título atual do cartão");Assert(more.ContextMenuStrip.Items.Count==1,"Somente pesquisar no Anitsu");Assert(((RoundButton)more).Ellipsis,"Ícone desenhado centralizado");
+    var more=Button(main,"⋯");Assert(more.Right<=more.Parent.Width&&more.Top>=0,"Três pontinhos cabem no cartão");more.PerformClick();var menu=main.Controls.OfType<AnimeActionMenu>().Single();Assert(menu.Controls.OfType<Button>().Count()==1,"Somente pesquisar no Anitsu");menu.Controls.OfType<Button>().Single().PerformClick();Assert(provider.Requests==1&&provider.Title==anime.Title,"Menu pesquisa o título atual do cartão");Assert(((RoundButton)more).Ellipsis,"Ícone desenhado centralizado");
     Assert(before.SequenceEqual(File.ReadAllBytes(store.FilePath))&&backup.SequenceEqual(File.ReadAllBytes(store.BackupPath(0))),"Menu não altera biblioteca nem backup");
     var external=new LibraryStore(folder);var externalData=external.Load();externalData.Add(new Anime{Title="Alteração externa"});external.Save(externalData);
     Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title="Não salvo"},true})&&provider.Requests==1,"Falha no salvamento não dispara busca");main.Close();Assert(provider.Disposed,"Fechar app encerra integração");
