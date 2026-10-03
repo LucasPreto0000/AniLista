@@ -14,6 +14,8 @@ class AnitsuTests {
  static void Assert(bool value,string message){if(!value)throw new Exception(message);count++;}
  static AnitsuCandidate Candidate(string name,string path){return new AnitsuCandidate{Name=name,Path=path};}
  static int Main(){
+  // CI consoles use UTF-8 with a BOM; exercise that parent-console environment.
+  Console.InputEncoding=new UTF8Encoding(true);
   string folder=Path.Combine(Path.GetTempPath(),"AniLista-anitsu-"+Guid.NewGuid().ToString("N"));
   try{
    var results=new[]{Candidate("Infinite Stratos","Anime/IS"),Candidate("Infinite Stratos 2","Anime/IS2")};
@@ -48,7 +50,11 @@ class AnitsuTests {
   int exit;Assert(AnitsuNativeHost.TryRun(new[]{"chrome-extension://untrusted/"},out exit)&&exit==1,"Untrusted native origin rejected");
   using(var bridge=new AnitsuBridgeServer()){
    bridge.Start();using(var helper=new Process{StartInfo=new ProcessStartInfo(typeof(AnitsuApi).Assembly.Location,ExtensionIdentity.Origin+" --native-host-diagnostics"){UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true}}){
-    helper.Start();try{
+    // Process.Start creates its stdin StreamWriter with Console.InputEncoding.
+    // AutoFlush can emit a BOM before any BaseStream write and corrupt framing.
+    var parentEncoding=Console.InputEncoding;
+    try{Console.InputEncoding=new UTF8Encoding(false);helper.Start();}finally{Console.InputEncoding=parentEncoding;}
+    try{
      AnitsuNativeProtocol.Write(helper.StandardInput.BaseStream,AnitsuNativeProtocol.Json(new{type="hello",extension=ExtensionIdentity.Id}));bool handshake=SpinWait.SpinUntil(()=>bridge.Connected,5000);if(!handshake){bridge.Stop();helper.StandardInput.Close();if(helper.WaitForExit(5000))Console.WriteLine("Native helper exit="+helper.ExitCode+"; diagnostics="+helper.StandardError.ReadToEnd());}Assert(handshake,"Single EXE native helper handshake");
      var search=bridge.SearchAsync("Lain",CancellationToken.None);var outgoing=AnitsuNativeProtocol.Parse(AnitsuNativeProtocol.Read(helper.StandardOutput.BaseStream));
      AnitsuNativeProtocol.Write(helper.StandardInput.BaseStream,AnitsuNativeProtocol.Json(new{type="result",id=AnitsuApi.StringValue(outgoing,"id"),status=401,body="{}"}));Assert((await search).State==AnitsuSearchState.LoginRequired,"Native stdio transport preserves login state");
