@@ -18,6 +18,8 @@ using System.Windows.Forms;
 namespace AniLista {
 static class Program {
  [STAThread]static int Main(string[] args){
+  int hostExit;if(AnitsuNativeHost.TryRun(args,out hostExit))return hostExit;
+  WebViewDependencies.Register();
   DpiForm.EnablePerMonitor();
   ServicePointManager.SecurityProtocol|=SecurityProtocolType.Tls12;
   if(args.Length>0&&args[0]=="--self-test")return SelfTest();
@@ -26,7 +28,7 @@ static class Program {
   Application.ThreadException+=delegate(object s,ThreadExceptionEventArgs e){try{Notice.Tell(null,"Algo deu errado","O AniLista encontrou um problema, mas sua biblioteca continua salva.\n\n"+e.Exception.Message);}catch{}};
   bool ownsMutex;using(var mutex=new Mutex(true,"Local\\AniLista-Desktop-"+Environment.UserName,out ownsMutex)){
    if(!ownsMutex){Notice.Tell(null,"O AniLista já está aberto","Confira a barra de tarefas.");return 0;}
-   try{var store=new LibraryStore(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"AniLista"));Application.Run(new MainForm(store,store.Load()));return 0;}
+   try{var store=new LibraryStore(LibraryStore.DefaultFolder);Application.Run(new MainForm(store,store.Load()));return 0;}
    catch(Exception ex){Notice.Tell(null,"Não foi possível abrir o AniLista",ex.Message);return 1;}
    finally{mutex.ReleaseMutex();}
   }

@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.2](releases/v1.1.2.md)
+
+Busca automática opcional no Anitsu após salvar, login próprio ou extensão Chrome/Edge, seleção de pastas e cancelamento de consultas. Preserva a biblioteca e o backup único.
+
 ## [1.1.1](releases/v1.1.1.md)
 
 Cursores personalizados para a seta, botões e campos de texto, incorporados ao executável.

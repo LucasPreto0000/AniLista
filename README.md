@@ -12,6 +12,8 @@ O aplicativo pode ser usado sem instalação e sem abrir um navegador.
 
 Para compilar manualmente, baixe o código-fonte, extraia no Windows e execute `COMPILAR.bat`. O script usa o compilador do .NET Framework instalado no Windows e gera `AniLista.exe`.
 
+Para desenvolvimento, use `scripts/build.ps1`: ele compila em `bin/`, reaproveita resultados sem alterações e permite escolher `-Test core`, `-Test ui` ou `-Test all`. O [guia de desenvolvimento](docs/DEVELOPMENT.md) contém os comandos e o mapa das funcionalidades.
+
 ## Como usar
 
 1. Clique em **Adicionar anime**.
@@ -32,7 +34,11 @@ Para compilar manualmente, baixe o código-fonte, extraia no Windows e execute `
 
 ## Salvamento e funcionamento offline
 
-As alterações são salvas automaticamente neste computador, em `%LOCALAPPDATA%\AniLista\biblioteca.json`. São mantidas até cinco versões anteriores: `biblioteca.json.bak` e `.bak.1` até `.bak.4`. Se o arquivo principal estiver corrompido, o aplicativo restaura o backup válido mais recente e preserva uma cópia do arquivo corrompido.
+As alterações são salvas automaticamente neste computador, em `%LOCALAPPDATA%\AniLista\biblioteca.json`, fora da pasta do executável. Um único backup completo, `biblioteca.json.bak`, é atualizado a cada salvamento. Não são criados arquivos `.bak.1`, `.bak.2` nem um histórico de cópias.
+
+Mover, atualizar ou reverter o executável não muda essa pasta: o aplicativo continua lendo o mesmo AppData do usuário. Se o arquivo principal estiver ausente ou corrompido, o aplicativo recupera o backup válido. Uma instância com dados antigos não pode sobrescrever uma biblioteca que mudou no disco.
+
+Use **Backup e recuperação**, no rodapé, para exportar a biblioteca ou recuperar animes do backup automático ou de outro arquivo. A recuperação adiciona apenas animes ausentes, preservando os episódios e as listas dos animes atuais.
 
 A busca e o download das capas precisam de internet. Suas listas, episódios e o cadastro manual funcionam offline. O catálogo é fornecido pela AniList. Consultas ficam em cache por cinco minutos. Se a API limitar os pedidos, a busca mostra a espera e pode ser cancelada ao mudar o texto. Capas só são baixadas quando os cartões aparecem na área visível.
 
@@ -53,6 +59,12 @@ Os testes estão em `tests`. O workflow Windows compila e executa testes de recu
 Para publicar uma versão, atualize `source/VersionInfo.cs`, crie as notas em `releases/vX.Y.Z.md`, atualize [CHANGELOG.md](CHANGELOG.md) e execute **Compilar e testar AniLista para Windows** em Actions, informando `vX.Y.Z`. A publicação exige testes aprovados, confere a versão do executável e recusa substituir uma release existente. Somente `AniLista.exe` é anexado; o GitHub fornece seus próprios arquivos de código-fonte.
 
 O aplicativo organiza sua biblioteca; não transmite episódios de anime.
+
+## Integração Anitsu
+
+O botão **Anitsu** permite buscar automaticamente depois de salvar um anime. Escolha login dentro do app ou a extensão Chrome/Edge, que usa sua sessão do navegador e abre a pasta encontrada. Resultados ambíguos exigem escolher um caminho; uma falha na busca não afeta a biblioteca.
+
+Consulte [como configurar](docs/ANITSU.md) e [como instalar a extensão](extensions/anitsu/README.md). O login dentro do app requer o WebView2 Runtime da Microsoft. A abertura autenticada deve ser conferida com sua própria sessão.
 
 Cursores: Windows 11 Cursors Concept, por [jepriCreations](https://www.deviantart.com/jepricreations), o mesmo pacote usado no YT-DLP Deck. Licença original em `source/assets/cursors/LICENSE-cursors.txt`.
 

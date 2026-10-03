@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "AniLista · Anitsu",
+  "version": "1.0.0",
+  "description": "Pesquisa no Anitsu usando sua sessão e abre a pasta encontrada pelo AniLista.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1PCQL+ks76bu9HgTdwzQXASukK+bPjXC4p9ZiXorxHfQ5EZ36/9t5CEfidmIuEBSs+zbgraIvTOpSg2nzYJoXSFnIo/mMXoBjRHuklGhc35Q/WMufqn3cF+En1ougyxLJ2URvPOpqY6u4nF7olAjmLacJABVCNj+VW8y0gr6nhGrig5jUF3Ma6A15UfnnzaUNfbnndnq/JRIM6JZNh/RKN9nI92QuY+RRRS42FgCFY5opuwpDtRYpPo0zUhuYfqzKEuXn1rumFtkfqOEEikPYmuB/rMNHZb3jrULgMksjWIIzmgQg+D5IDSyRH2XaC8QOiDG4e+Djphg82N7jXdgoQIDAQAB",
+  "permissions": ["nativeMessaging", "scripting", "tabs"],
+  "host_permissions": ["https://nuvem.anitsu.moe/*", "https://anitsu.moe/*"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_title": "Conectar ao AniLista (mantenha o app aberto)"}
+}
