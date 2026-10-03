@@ -13,7 +13,7 @@ on:
       version:
         description: Versão que será publicada (deve corresponder ao código)
         required: true
-        default: v1.1.14
+        default: v1.1.15
 permissions:
   contents: read
 jobs:

@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.15](releases/v1.1.15.md)
+
+Solicita a renovação da sessão do Downloader antes de cada pesquisa no Anitsu, preservando o login. Recupera automaticamente erros HTTP 502, 503 e 504 com até duas tentativas e oferece um aviso com opção de tentar novamente se o servidor continuar indisponível.
+
 ## [1.1.14](releases/v1.1.14.md)
 
 Menu de pesquisa no Anitsu redesenhado como painel interno com cantos arredondados, texto centralizado e cursor personalizado. Fecha com Esc, ao clicar fora ou ao selecionar a pesquisa. Inclui o painel Anitsu compacto, sem barra externa e com zoom de 90%.
