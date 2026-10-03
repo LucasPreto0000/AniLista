@@ -3,3 +3,6 @@ AniLista.exe
 qa/
 bin/
 obj/
+
+.worktrees/
+.superpowers/
