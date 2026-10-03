@@ -62,9 +62,9 @@ O aplicativo organiza sua biblioteca e permite abrir o Anitsu Downloader integra
 
 ## Integração Anitsu
 
-Use **⋯ → Pesquisar no Anitsu**, no cartão do anime. A busca abre uma janela do Cloud com **Anitsu Downloader 1.6.8 incorporado ao EXE**. Entre na sua conta nessa janela e selecione os arquivos para baixar. Resultados ambíguos pedem escolher uma pasta; falhas na busca não afetam a biblioteca. O menu também permite abrir o Downloader sem pesquisar.
+Use **⋯ → Pesquisar no Anitsu**, no cartão do anime. A busca abre uma janela do Cloud com **Anitsu Downloader 1.6.8 incorporado ao EXE**. Entre na sua conta nessa janela e selecione os arquivos para baixar. Resultados ambíguos pedem escolher uma pasta; falhas na busca não afetam a biblioteca. A janela mostra o site diretamente, sem barra adicional, com preenchimento automático do nome e reaproveitamento da página nas próximas buscas.
 
-Consulte [como usar](docs/ANITSU.md). Requer o WebView2 Runtime da Microsoft. Não exige extensão nem pasta de scripts ao lado do aplicativo. Downloads diretos vão para Downloads ou para o destino escolhido em **Pasta dos downloads**.
+Consulte [como usar](docs/ANITSU.md). Requer o WebView2 Runtime da Microsoft. Não exige extensão nem pasta de scripts ao lado do aplicativo. Downloads diretos vão para Downloads ou para o destino configurado anteriormente.
 
 Cursores: Windows 11 Cursors Concept, por [jepriCreations](https://www.deviantart.com/jepricreations), o mesmo pacote usado no YT-DLP Deck. Licença original em `source/assets/cursors/LICENSE-cursors.txt`.
 

@@ -17,7 +17,7 @@ using System.Web.Script.Serialization;
 using System.Windows.Forms;
 namespace AniLista {
 public sealed class RoundButton:Button {
- public bool Primary,Nav,Danger;public Color Dot=Color.Empty,Under=Theme.Background;bool hover,down;
+ public bool Primary,Nav,Danger,Ellipsis;public Color Dot=Color.Empty,Under=Theme.Background;bool hover,down;
  public RoundButton(){SetStyle(ControlStyles.AllPaintingInWmPaint|ControlStyles.OptimizedDoubleBuffer|ControlStyles.UserPaint|ControlStyles.ResizeRedraw,true);FlatStyle=FlatStyle.Flat;FlatAppearance.BorderSize=0;UseVisualStyleBackColor=false;UseMnemonic=false;}
  protected override void OnMouseEnter(EventArgs e){hover=true;Invalidate();base.OnMouseEnter(e);}
  protected override void OnMouseLeave(EventArgs e){hover=false;down=false;Invalidate();base.OnMouseLeave(e);}
@@ -41,7 +41,8 @@ public sealed class RoundButton:Button {
     using(var p=Theme.Round(pill,pill.Height/2))using(var b=new SolidBrush(selected?Color.FromArgb(90,Theme.Accent):Color.FromArgb(34,36,50)))g.FillPath(b,p);
     TextRenderer.DrawText(g,count,Font,pill,fore,Theme.Center);
    }
-  }else TextRenderer.DrawText(g,Text,Font,new Rectangle(Theme.S(this,4),0,Width-Theme.S(this,8),Height),fore,Theme.Center);
+  }else if(Ellipsis){float size=3*Theme.ScaleFor(this),gap=4*Theme.ScaleFor(this),total=3*size+2*gap,left=(Width-total)/2f,top=(Height-size)/2f;using(var brush=new SolidBrush(fore))for(int i=0;i<3;i++)g.FillEllipse(brush,left+i*(size+gap),top,size,size);}
+  else TextRenderer.DrawText(g,Text,Font,new Rectangle(Theme.S(this,4),0,Width-Theme.S(this,8),Height),fore,Theme.Center);
   if(Focused&&ShowFocusCues)using(var p=Theme.Round(new Rectangle(2,2,Width-5,Height-5),Theme.S(this,7)))using(var pen=new Pen(Color.FromArgb(150,Primary?Color.White:Theme.Accent),1.5f))g.DrawPath(pen,p);
  }
 }

@@ -1,5 +1,9 @@
 # Histórico de mudanças
 
+## [1.1.4](releases/v1.1.4.md)
+
+Três pontos centralizados e menu com apenas pesquisar no Anitsu. Janela integrada com ícone e sem barra/rodapé adicionais. Reutiliza o Cloud, preenche o nome assim que o campo aparece, elimina a espera de digitação e cancela consultas antigas.
+
 ## [1.1.3](releases/v1.1.3.md)
 
 Pesquisa manual no menu de três pontinhos de cada anime e Anitsu Downloader 1.6.8 incorporado ao executável, com sessão própria, seleção de destino e downloads sem sobrescrever arquivos existentes. Substitui os dois modos e a busca automática da versão anterior.

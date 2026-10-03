@@ -63,7 +63,7 @@ class InteractionTests {
  }
  static void AnitsuDialogs(string folder){
   using(var window=new AnitsuWebViewForm(folder)){
-   window.ShowInTaskbar=false;window.Opacity=0;window.Show();Application.DoEvents();Assert(!Walk(window).OfType<ComboBox>().Any(),"Janela integrada não oferece modos");Assert(Button(window,"Pasta dos downloads")!=null,"Downloader está na janela integrada");Capture(window,"anitsu-integrado-100.png");window.ApplyScale(1.5f);Application.DoEvents();Capture(window,"anitsu-integrado-150.png");window.Close();
+   window.ShowInTaskbar=false;window.Opacity=0;window.Show();Application.DoEvents();Assert(!Walk(window).OfType<ComboBox>().Any(),"Janela integrada não oferece modos");Assert(!Walk(window).OfType<Button>().Any(),"Sem barra de botões adicional");Assert(!Walk(window).OfType<Label>().Any(),"Sem rodapé adicional");Assert(window.Icon!=null&&window.ShowIcon,"Janela tem ícone");Capture(window,"anitsu-integrado-100.png");window.ApplyScale(1.5f);Application.DoEvents();Capture(window,"anitsu-integrado-150.png");window.Close();
   }
   using(var results=new AnitsuResultsForm(new List<AnitsuCandidate>{new AnitsuCandidate{Name="Lain",Path="Anime/Lain"},new AnitsuCandidate{Name="Lain",Path="BD/Lain"}})){
    results.ShowInTaskbar=false;results.Opacity=0;results.Show();Application.DoEvents();var list=Walk(results).OfType<ListBox>().Single();Assert(!Button(results,"Abrir no Anitsu").Enabled,"Resultado ambíguo exige seleção");list.SelectedIndex=1;Assert(Button(results,"Abrir no Anitsu").Enabled,"Selecionar pasta habilita abertura");Capture(results,"anitsu-results-100.png");Button(results,"Abrir no Anitsu").PerformClick();Assert(results.Selected.Path=="BD/Lain","Seleção preserva caminho escolhido");
@@ -86,7 +86,7 @@ class InteractionTests {
     anime.Episode=1;anime.Title="Título atualizado";Assert((bool)save.Invoke(main,new object[]{anime,false})&&provider.Requests==0,"Edição não dispara busca");
     Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title=anime.Title},true})&&provider.Requests==0,"Duplicata não dispara busca");
     byte[] before=File.ReadAllBytes(store.FilePath),backup=File.ReadAllBytes(store.BackupPath(0));
-    var more=Button(main,"⋯");Assert(more.Right<=more.Parent.Width&&more.Top>=0,"Três pontinhos cabem no cartão");more.ContextMenuStrip.Items[0].PerformClick();Assert(provider.Requests==1&&provider.Title==anime.Title,"Menu pesquisa o título atual do cartão");more.ContextMenuStrip.Items[1].PerformClick();Assert(provider.Opened==1,"Menu abre downloader integrado");
+    var more=Button(main,"⋯");Assert(more.Right<=more.Parent.Width&&more.Top>=0,"Três pontinhos cabem no cartão");more.ContextMenuStrip.Items[0].PerformClick();Assert(provider.Requests==1&&provider.Title==anime.Title,"Menu pesquisa o título atual do cartão");Assert(more.ContextMenuStrip.Items.Count==1,"Somente pesquisar no Anitsu");Assert(((RoundButton)more).Ellipsis,"Ícone desenhado centralizado");
     Assert(before.SequenceEqual(File.ReadAllBytes(store.FilePath))&&backup.SequenceEqual(File.ReadAllBytes(store.BackupPath(0))),"Menu não altera biblioteca nem backup");
     var external=new LibraryStore(folder);var externalData=external.Load();externalData.Add(new Anime{Title="Alteração externa"});external.Save(externalData);
     Assert(!(bool)save.Invoke(main,new object[]{new Anime{Title="Não salvo"},true})&&provider.Requests==1,"Falha no salvamento não dispara busca");main.Close();Assert(provider.Disposed,"Fechar app encerra integração");
@@ -161,4 +161,3 @@ class InteractionTests {
  }
 
 }
-

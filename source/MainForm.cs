@@ -108,7 +108,7 @@ public sealed class MainForm:DpiForm {
     if(!cardIndex.TryGetValue(anime.Id,out card)){
      card=new AnimeCard(anime,changed=>{changed.Validate();SaveEntry(changed,false);},a=>Edit(a),a=>{
       if(Notice.Ask(this,"Remover anime","\""+a.Title+"\" será removido da sua biblioteca.","Remover","Cancelar",true))SaveList(entries.Where(e=>e.Id!=a.Id).Select(e=>e.Copy()).ToList());
-     },Theme.ScaleFor(this),covers,a=>SearchInAnitsu(a),()=>OpenAnitsuDownloader());cardIndex.Add(anime.Id,card);cards.Controls.Add(card);
+     },Theme.ScaleFor(this),covers,a=>SearchInAnitsu(a));cardIndex.Add(anime.Id,card);cards.Controls.Add(card);
     }else card.Bind(anime);
     cards.Controls.SetChildIndex(card,i);
    }
@@ -150,7 +150,6 @@ public sealed class MainForm:DpiForm {
   var next=entries.Select(a=>a.Copy()).ToList();if(isNew)next.Add(entry);else{int index=next.FindIndex(a=>a.Id==entry.Id);if(index<0)return false;next[index]=entry;}return SaveList(next);
  }
  async void SearchInAnitsu(Anime anime){try{await anitsuWorkspace.SearchAsync(anime,this);}catch(Exception e){if(!IsDisposed)Notice.Tell(this,"Anitsu",e.Message);}}
- async void OpenAnitsuDownloader(){try{await anitsuWorkspace.ShowAsync(this);}catch(Exception e){if(!IsDisposed)Notice.Tell(this,"Anitsu",e.Message);}}
  void Edit(Anime entry){using(var editor=new EditorForm(entry,false,entry.Status,a=>SaveEntry(a,false)))editor.ShowDialog(this);}
  void AddAnime(){
   if(Application.OpenForms.OfType<SearchForm>().Any())return;

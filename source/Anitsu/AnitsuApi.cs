@@ -8,7 +8,7 @@ public static class AnitsuApi {
  public const string Cloud="https://nuvem.anitsu.moe/";
  public const int MaxBytes=512*1024;
  public static AnitsuSearchResult FromHttp(int status,string body){
-  if(status==401||status==403)return AnitsuSearchResult.Error(AnitsuSearchState.LoginRequired,"Entre na sua conta em Anitsu → Conectar.");
+  if(status==401||status==403)return AnitsuSearchResult.Error(AnitsuSearchState.LoginRequired,"Entre na sua conta no Anitsu.");
   if(status!=200)return AnitsuSearchResult.Error(AnitsuSearchState.Unavailable,"O Anitsu está indisponível agora (HTTP "+status+").");
   try{return Parse(body);}catch(FormatException){return AnitsuSearchResult.Error(AnitsuSearchState.Unavailable,"O Anitsu devolveu uma resposta inválida.");}
  }

@@ -1,12 +1,13 @@
 # Anitsu Downloader dentro do AniLista
 
-1. No cartão do anime, clique em **⋯ → Pesquisar no Anitsu**.
-2. Na primeira vez, use **Entrar no Anitsu** e faça login no site verdadeiro. Esta sessão é própria do aplicativo; o login do Chrome/Edge não é transferido.
-3. Clique em **Pesquisar** após entrar. Uma correspondência exata e única abre a pasta; resultados ambíguos pedem escolher um caminho.
-4. Selecione os arquivos no painel flutuante do **Anitsu Downloader 1.6.8** e inicie o download. **⋯ → Abrir Anitsu Downloader** também abre o Cloud sem pesquisar.
-5. **Pasta dos downloads** muda o destino dos downloads diretos. O padrão é Downloads do usuário. Arquivos existentes são preservados, com sufixo numérico nos novos arquivos de mesmo nome.
+1. No cartão do anime, clique em **⋯ → Pesquisar no Anitsu**. Esta é a única opção do menu.
+2. A janela abre diretamente no Cloud, sem barra ou rodapé adicionais. O nome é preenchido assim que o campo fica disponível. Uma correspondência exata e única abre a pasta; resultados ambíguos pedem escolher um caminho.
+3. Se precisar entrar na conta, o app abre o login do Anitsu. Depois de entrar, abra o Cloud pelo próprio site; a pesquisa escolhida é retomada automaticamente. Esta sessão é própria do aplicativo.
+4. Selecione os arquivos no painel do **Anitsu Downloader 1.6.8** e inicie o download.
 
-Adicionar, editar ou importar animes não dispara pesquisas. Falhas no Anitsu não alteram a biblioteca. Se a interface do site mudar e impedir abrir a pasta, **Copiar caminho** continua disponível. Fechar a janela encerra downloads diretos em andamento; fechar o AniLista também fecha sua janela Anitsu.
+Novas buscas reaproveitam o Cloud aberto. A espera de 300 ms da busca do site é removida no navegador integrado; consultas antigas são canceladas e pedidos simultâneos iguais compartilham uma resposta. O tempo de resposta da rede e do serviço continua dependendo do Anitsu.
+
+Os downloads diretos usam Downloads ou o destino já configurado anteriormente. Arquivos existentes são preservados, com sufixo numérico em nomes repetidos. Adicionar ou editar animes não dispara buscas. Se a pasta não abrir, o app copia o caminho e mostra um aviso. Fechar a janela encerra downloads diretos em andamento; fechar o AniLista também fecha sua janela Anitsu.
 
 ## Downloader incorporado
 
@@ -22,7 +23,7 @@ O Windows precisa do [WebView2 Runtime da Microsoft](https://developer.microsoft
 - Destino escolhido: `%LOCALAPPDATA%\AniLista\anitsu-download-folder.txt`.
 - Dependências extraídas automaticamente: `%LOCALAPPDATA%\AniLista\runtime\webview2-1.0.4258.31`.
 - Biblioteca e seu único `.bak` continuam na localização anterior e não guardam a sessão.
-- **Sair da conta** limpa os dados do perfil Anitsu. Mover o executável preserva a sessão e a biblioteca.
+- A sessão pertence ao perfil próprio do app. Mover o executável preserva a sessão e a biblioteca.
 
 A extensão em `extensions/anitsu` pertence à versão 1.1.2 e não é usada pela interface atual.
 
